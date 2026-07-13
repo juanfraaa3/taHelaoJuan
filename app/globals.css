@@ -1,0 +1,431 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4f2ed;
+  --foreground: #181b1f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.metric {
+  min-height: 88px;
+  border: 1px solid #d9d2c6;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.metric span {
+  display: block;
+  color: #1d2c22;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.metric small {
+  display: block;
+  margin-top: 10px;
+  color: #646970;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.panel,
+.recommendation-panel {
+  border: 1px solid #d8d1c3;
+  background: #ffffff;
+  box-shadow: 0 16px 34px rgb(40 33 20 / 0.06);
+}
+
+.panel {
+  padding: 18px;
+}
+
+.recommendation-panel {
+  align-self: stretch;
+  padding: 20px;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.panel h2,
+.recommendation-panel h2 {
+  margin: 0;
+  color: #17191c;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.eyebrow {
+  margin: 0 0 7px;
+  color: #47644b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.temperature-badge {
+  display: grid;
+  min-width: 96px;
+  place-items: center;
+  border: 1px solid #d7aa55;
+  background: #fff3d8;
+  color: #2a2419;
+  padding: 12px;
+  text-align: center;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.temperature-badge span {
+  margin-top: 6px;
+  color: #6f5c37;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.recommendation-panel li {
+  border-left: 4px solid #47644b;
+  background: #f4f7f2;
+  padding: 10px 12px;
+  color: #2d342d;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.primary-button,
+.secondary-button {
+  border: 0;
+  border-radius: 4px;
+  font-weight: 800;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.primary-button:hover,
+.secondary-button:hover {
+  transform: translateY(-1px);
+}
+
+.primary-button {
+  width: 100%;
+  margin-top: 18px;
+  background: #1f5f7a;
+  color: #ffffff;
+  padding: 15px 18px;
+  box-shadow: 0 10px 24px rgb(31 95 122 / 0.22);
+}
+
+.secondary-button {
+  border: 1px solid #c7beb0;
+  background: #f9f7f1;
+  color: #22262b;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.status-text {
+  margin: -6px 0 14px;
+  color: #656b72;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.weather-grid,
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.weather-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  color: #3b4046;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid #cfc7ba;
+  border-radius: 4px;
+  background: #fbfaf7;
+  color: #17191c;
+  outline: none;
+}
+
+input,
+select {
+  min-height: 44px;
+  padding: 10px 11px;
+}
+
+textarea {
+  min-height: 92px;
+  resize: vertical;
+  padding: 11px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #1f5f7a;
+  box-shadow: 0 0 0 3px rgb(31 95 122 / 0.16);
+}
+
+.weather-grid label {
+  position: relative;
+}
+
+.weather-grid label span {
+  position: absolute;
+  right: 10px;
+  bottom: 13px;
+  color: #77736c;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.weather-grid input {
+  padding-right: 46px;
+}
+
+.model-box {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #d7dfd1;
+  background: #f5f8f1;
+  padding: 14px;
+}
+
+.model-box strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #263929;
+}
+
+.model-box p {
+  margin: 0;
+  color: #55605a;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.progress-track {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dce4d7;
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #47644b, #d69b38);
+}
+
+.similar-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  color: #5d6268;
+  font-size: 13px;
+}
+
+.similar-list p {
+  margin: 0;
+  color: #343a40;
+  font-weight: 800;
+}
+
+.similar-list span {
+  border: 1px solid #e0dacd;
+  background: #fbfaf7;
+  padding: 9px 10px;
+}
+
+.feeling-control {
+  margin-top: 18px;
+}
+
+.feeling-control p {
+  margin: 0 0 10px;
+  color: #3b4046;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.feeling-control div {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.feeling-control button {
+  min-height: 48px;
+  border: 1px solid #cfc7ba;
+  border-radius: 4px;
+  background: #fbfaf7;
+  color: #30353a;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.feeling-control button.active {
+  border-color: #1f5f7a;
+  background: #dcecf3;
+  color: #133e50;
+}
+
+.notes-field {
+  margin-top: 16px;
+}
+
+.empty-state {
+  border: 1px dashed #cfc7ba;
+  background: #fbfaf7;
+  padding: 18px;
+  color: #5f666c;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.records-list {
+  display: grid;
+  gap: 10px;
+}
+
+.records-list article {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  border: 1px solid #e0dacd;
+  background: #fbfaf7;
+  padding: 12px;
+}
+
+.records-list strong {
+  display: block;
+  color: #23272d;
+  font-size: 14px;
+}
+
+.records-list p {
+  margin: 5px 0 0;
+  color: #5b6269;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.records-list span {
+  display: inline-block;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: #fff0d4;
+  color: #6d4d12;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.records-list button {
+  align-self: start;
+  border: 1px solid #e4b4a4;
+  border-radius: 4px;
+  background: #fff4f0;
+  color: #8b2f19;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .panel,
+  .recommendation-panel {
+    padding: 16px;
+  }
+
+  .weather-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .secondary-button {
+    width: 100%;
+  }
+
+  .feeling-control div {
+    grid-template-columns: 1fr;
+  }
+
+  .records-list article {
+    grid-template-columns: 1fr;
+  }
+}
