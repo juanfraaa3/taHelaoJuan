@@ -50,6 +50,18 @@ button:disabled {
   padding: 14px;
 }
 
+.cloud-status {
+  display: inline-flex;
+  margin-top: 16px;
+  border: 1px solid #cbd8c5;
+  background: #eef5ea;
+  color: #344d37;
+  padding: 9px 11px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .metric span {
   display: block;
   color: #1d2c22;

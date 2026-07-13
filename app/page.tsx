@@ -192,26 +192,55 @@ export default function Home() {
   const [records, setRecords] = useState<OutfitRecord[]>([]);
   const [weather, setWeather] = useState<WeatherData>(defaultWeather);
   const [draft, setDraft] = useState<DraftRecord>(defaultDraft);
+  const [hasLoadedRecords, setHasLoadedRecords] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(
+    "Cargando registros guardados en la nube...",
+  );
   const [weatherStatus, setWeatherStatus] = useState(
     "Puedes usar clima automatico o ajustar los datos a mano.",
   );
 
   useEffect(() => {
-    setRecords(parseStoredRecords());
+    async function loadRecords() {
+      try {
+        const response = await fetch("/api/outfit-records");
+        const data = (await response.json()) as {
+          records?: OutfitRecord[];
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(data.error ?? "No pude cargar los registros.");
+        }
+
+        setRecords(data.records ?? []);
+        setSyncStatus("Registros sincronizados con la nube.");
+      } catch {
+        const localRecords = parseStoredRecords();
+        setRecords(localRecords);
+        setSyncStatus(
+          "No pude conectar con la nube. Estoy usando el respaldo de este navegador.",
+        );
+      } finally {
+        setHasLoadedRecords(true);
+      }
+    }
+
+    loadRecords();
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && hasLoadedRecords) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
     }
-  }, [records]);
+  }, [hasLoadedRecords, records]);
 
   const prediction = useMemo(
     () => buildPrediction(records, weather),
     [records, weather],
   );
 
-  const lastRecord = records[0];
   const comfortRate =
     records.length === 0
       ? 0
@@ -284,7 +313,7 @@ export default function Home() {
     }));
   }
 
-  function saveRecord() {
+  async function saveRecord() {
     const newRecord: OutfitRecord = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
@@ -292,8 +321,36 @@ export default function Home() {
       ...draft,
     };
 
-    setRecords((current) => [newRecord, ...current]);
-    setDraft(defaultDraft);
+    setIsSaving(true);
+    setSyncStatus("Guardando registro en la nube...");
+
+    try {
+      const response = await fetch("/api/outfit-records", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newRecord),
+      });
+      const data = (await response.json()) as {
+        record?: OutfitRecord;
+        error?: string;
+      };
+
+      if (!response.ok || !data.record) {
+        throw new Error(data.error ?? "No pude guardar el registro.");
+      }
+
+      setRecords((current) => [data.record!, ...current]);
+      setDraft(defaultDraft);
+      setSyncStatus("Registro guardado en la nube.");
+    } catch {
+      setRecords((current) => [newRecord, ...current]);
+      setDraft(defaultDraft);
+      setSyncStatus(
+        "No pude guardar en la nube. Lo deje como respaldo local en este navegador.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function exportData() {
@@ -308,8 +365,27 @@ export default function Home() {
     URL.revokeObjectURL(url);
   }
 
-  function deleteRecord(id: string) {
+  async function deleteRecord(id: string) {
+    const previousRecords = records;
     setRecords((current) => current.filter((record) => record.id !== id));
+    setSyncStatus("Borrando registro...");
+
+    try {
+      const response = await fetch(
+        `/api/outfit-records?id=${encodeURIComponent(id)}`,
+        { method: "DELETE" },
+      );
+      const data = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "No pude borrar el registro.");
+      }
+
+      setSyncStatus("Registro borrado de la nube.");
+    } catch {
+      setRecords(previousRecords);
+      setSyncStatus("No pude borrar ese registro en la nube.");
+    }
   }
 
   return (
@@ -328,6 +404,7 @@ export default function Home() {
                 Registra clima, ropa y sensacion real. La app compara dias
                 parecidos y mejora la recomendacion mientras juntas historial.
               </p>
+              <p className="cloud-status">{syncStatus}</p>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -599,8 +676,12 @@ export default function Home() {
               />
             </label>
 
-            <button className="primary-button" onClick={saveRecord}>
-              Guardar registro
+            <button
+              className="primary-button"
+              disabled={isSaving}
+              onClick={saveRecord}
+            >
+              {isSaving ? "Guardando..." : "Guardar registro"}
             </button>
           </section>
 

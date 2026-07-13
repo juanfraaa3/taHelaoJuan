@@ -1,0 +1,21 @@
+CREATE TABLE `outfit_records` (
+	`id` text PRIMARY KEY NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`temperature` real NOT NULL,
+	`apparent` real NOT NULL,
+	`humidity` real NOT NULL,
+	`wind` real NOT NULL,
+	`gusts` real NOT NULL,
+	`precipitation` real NOT NULL,
+	`cloud_cover` real NOT NULL,
+	`weather_source` text NOT NULL,
+	`upper_body` text NOT NULL,
+	`lower_body` text NOT NULL,
+	`outer_layer` text NOT NULL,
+	`shoes` text NOT NULL,
+	`accessories` text DEFAULT '' NOT NULL,
+	`activity` text NOT NULL,
+	`indoor_time` text NOT NULL,
+	`feeling` integer NOT NULL,
+	`notes` text DEFAULT '' NOT NULL
+);
