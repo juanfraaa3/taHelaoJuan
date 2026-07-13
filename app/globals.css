@@ -177,6 +177,17 @@ button:disabled {
   box-shadow: 0 10px 24px rgb(31 95 122 / 0.22);
 }
 
+.primary-button.compact {
+  width: auto;
+  min-width: 140px;
+  margin-top: 0;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+}
+
 .secondary-button {
   border: 1px solid #c7beb0;
   background: #f9f7f1;
@@ -404,6 +415,109 @@ textarea:focus {
   margin-top: 16px;
 }
 
+.start-registration {
+  display: grid;
+  gap: 18px;
+  border: 1px solid #d7dfd1;
+  background: #f5f8f1;
+  padding: 18px;
+}
+
+.start-registration p {
+  margin: 0;
+  color: #505a53;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.wizard-card {
+  display: grid;
+  gap: 16px;
+}
+
+.wizard-progress {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e4ded2;
+}
+
+.wizard-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1f5f7a, #d69b38);
+}
+
+.wizard-counter,
+.wizard-help {
+  margin: 0;
+  color: #656b72;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.wizard-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.wizard-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.wizard-options button {
+  min-height: 64px;
+  border: 1px solid #cfc7ba;
+  border-radius: 4px;
+  background: #fbfaf7;
+  color: #30353a;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.wizard-options button.active {
+  border-color: #1f5f7a;
+  background: #dcecf3;
+  color: #133e50;
+  box-shadow: inset 0 0 0 1px #1f5f7a;
+}
+
+.feeling-options {
+  grid-template-columns: 1fr;
+}
+
+.answer-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.answer-summary span {
+  border: 1px solid #e0dacd;
+  background: #fbfaf7;
+  color: #3a4046;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.wizard-actions {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.wizard-actions .primary-button {
+  justify-self: end;
+}
+
 .empty-state {
   border: 1px dashed #cfc7ba;
   background: #fbfaf7;
@@ -485,6 +599,20 @@ textarea:focus {
 
   .secondary-button {
     width: 100%;
+  }
+
+  .hero-actions .primary-button,
+  .primary-button.compact {
+    width: 100%;
+  }
+
+  .wizard-options,
+  .compact-options {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-actions {
+    grid-template-columns: 1fr;
   }
 
   .feeling-control div {

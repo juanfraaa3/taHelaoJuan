@@ -132,6 +132,18 @@ const indoorTimeOptions = [
   "Principalmente interior",
 ];
 
+const wizardSteps = [
+  "Parte superior",
+  "Parte inferior",
+  "Capa exterior",
+  "Calzado",
+  "Accesorios",
+  "Actividad",
+  "Interior/exterior",
+  "Sensacion",
+  "Confirmar",
+];
+
 function roundNumber(value: number, digits = 1) {
   return Number.isFinite(value) ? Number(value.toFixed(digits)) : 0;
 }
@@ -245,12 +257,39 @@ function parseStoredRecords() {
   }
 }
 
+function WizardOptions({
+  options,
+  selected,
+  onSelect,
+}: {
+  options: string[];
+  selected: string;
+  onSelect: (option: string) => void;
+}) {
+  return (
+    <div className="wizard-options">
+      {options.map((option) => (
+        <button
+          key={option}
+          className={selected === option ? "active" : ""}
+          onClick={() => onSelect(option)}
+          type="button"
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [records, setRecords] = useState<OutfitRecord[]>([]);
   const [weather, setWeather] = useState<WeatherData>(defaultWeather);
   const [draft, setDraft] = useState<DraftRecord>(defaultDraft);
   const [hasLoadedRecords, setHasLoadedRecords] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(0);
   const [syncStatus, setSyncStatus] = useState(
     "Cargando registros guardados en la nube...",
   );
@@ -383,6 +422,38 @@ export default function Home() {
     setDraft({ ...draft, accessories: nextAccessories.join(", ") });
   }
 
+  function openWizard() {
+    setWizardStep(0);
+    setIsWizardOpen(true);
+  }
+
+  function closeWizard() {
+    setWizardStep(0);
+    setIsWizardOpen(false);
+  }
+
+  function nextWizardStep() {
+    setWizardStep((current) => Math.min(current + 1, wizardSteps.length - 1));
+  }
+
+  function previousWizardStep() {
+    setWizardStep((current) => Math.max(current - 1, 0));
+  }
+
+  function selectDraftOption(
+    field:
+      | "upperBody"
+      | "lowerBody"
+      | "outerLayer"
+      | "shoes"
+      | "activity"
+      | "indoorTime",
+    value: string,
+  ) {
+    setDraft((current) => ({ ...current, [field]: value }));
+    nextWizardStep();
+  }
+
   async function saveRecord() {
     const newRecord: OutfitRecord = {
       id: crypto.randomUUID(),
@@ -411,10 +482,12 @@ export default function Home() {
 
       setRecords((current) => [data.record!, ...current]);
       setDraft(defaultDraft);
+      closeWizard();
       setSyncStatus("Registro guardado en la nube.");
     } catch {
       setRecords((current) => [newRecord, ...current]);
       setDraft(defaultDraft);
+      closeWizard();
       setSyncStatus(
         "No pude guardar en la nube. Lo deje como respaldo local en este navegador.",
       );
@@ -458,6 +531,142 @@ export default function Home() {
     }
   }
 
+  function renderWizardStep() {
+    if (wizardStep === 0) {
+      return (
+        <WizardOptions
+          options={upperBodyOptions}
+          selected={draft.upperBody}
+          onSelect={(option) => selectDraftOption("upperBody", option)}
+        />
+      );
+    }
+
+    if (wizardStep === 1) {
+      return (
+        <WizardOptions
+          options={lowerBodyOptions}
+          selected={draft.lowerBody}
+          onSelect={(option) => selectDraftOption("lowerBody", option)}
+        />
+      );
+    }
+
+    if (wizardStep === 2) {
+      return (
+        <WizardOptions
+          options={outerLayerOptions}
+          selected={draft.outerLayer}
+          onSelect={(option) => selectDraftOption("outerLayer", option)}
+        />
+      );
+    }
+
+    if (wizardStep === 3) {
+      return (
+        <WizardOptions
+          options={shoesOptions}
+          selected={draft.shoes}
+          onSelect={(option) => selectDraftOption("shoes", option)}
+        />
+      );
+    }
+
+    if (wizardStep === 4) {
+      return (
+        <div className="wizard-stack">
+          <p className="wizard-help">
+            Puedes elegir varios. Si no llevas accesorios, solo avanza.
+          </p>
+          <div className="wizard-options compact-options">
+            {accessoryOptions.map((option) => {
+              const selected = draft.accessories
+                .split(",")
+                .map((item) => item.trim())
+                .includes(option);
+
+              return (
+                <button
+                  key={option}
+                  className={selected ? "active" : ""}
+                  onClick={() => toggleAccessory(option)}
+                  type="button"
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    if (wizardStep === 5) {
+      return (
+        <WizardOptions
+          options={activityOptions}
+          selected={draft.activity}
+          onSelect={(option) => selectDraftOption("activity", option)}
+        />
+      );
+    }
+
+    if (wizardStep === 6) {
+      return (
+        <WizardOptions
+          options={indoorTimeOptions}
+          selected={draft.indoorTime}
+          onSelect={(option) => selectDraftOption("indoorTime", option)}
+        />
+      );
+    }
+
+    if (wizardStep === 7) {
+      return (
+        <div className="wizard-options feeling-options">
+          {[-2, -1, 0, 1, 2].map((value) => (
+            <button
+              key={value}
+              className={draft.feeling === value ? "active" : ""}
+              onClick={() => {
+                setDraft({ ...draft, feeling: value });
+                nextWizardStep();
+              }}
+              type="button"
+            >
+              {feelingLabels[value]}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="wizard-stack">
+        <div className="answer-summary">
+          <span>{draft.upperBody}</span>
+          <span>{draft.lowerBody}</span>
+          <span>{draft.outerLayer}</span>
+          <span>{draft.shoes}</span>
+          <span>{draft.accessories || "Sin accesorios"}</span>
+          <span>{draft.activity}</span>
+          <span>{draft.indoorTime}</span>
+          <span>{feelingLabels[draft.feeling]}</span>
+        </div>
+        <label className="notes-field">
+          Algo extra que quieras recordar
+          <textarea
+            placeholder="Ej: en la sombra tuve frio, pero caminando estaba bien."
+            value={draft.notes}
+            onChange={(event) =>
+              setDraft({ ...draft, notes: event.target.value })
+            }
+          />
+        </label>
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f2ed] text-[#181b1f]">
       <section className="border-b border-[#d8d1c3] bg-[#f9f7f1]">
@@ -475,6 +684,12 @@ export default function Home() {
                 parecidos y mejora la recomendacion mientras juntas historial.
               </p>
               <p className="cloud-status">{syncStatus}</p>
+            </div>
+
+            <div className="hero-actions">
+              <button className="primary-button compact" onClick={openWizard}>
+                REGISTRAR
+              </button>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -638,162 +853,70 @@ export default function Home() {
             <div className="panel-heading">
               <div>
                 <p className="eyebrow">Registro rapido</p>
-                <h2>Que llevas puesto y como te sientes</h2>
+                <h2>{isWizardOpen ? wizardSteps[wizardStep] : "Nuevo registro"}</h2>
               </div>
             </div>
 
-            <div className="guided-form">
-              <fieldset>
-                <legend>Parte superior</legend>
-                <div className="option-grid">
-                  {upperBodyOptions.map((option) => (
-                    <button
-                      key={option}
-                      className={draft.upperBody === option ? "active" : ""}
-                      onClick={() => setDraft({ ...draft, upperBody: option })}
-                      type="button"
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-
-              <fieldset>
-                <legend>Parte inferior</legend>
-                <div className="option-grid">
-                  {lowerBodyOptions.map((option) => (
-                    <button
-                      key={option}
-                      className={draft.lowerBody === option ? "active" : ""}
-                      onClick={() => setDraft({ ...draft, lowerBody: option })}
-                      type="button"
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-
-              <fieldset>
-                <legend>Capa exterior</legend>
-                <div className="option-grid">
-                  {outerLayerOptions.map((option) => (
-                    <button
-                      key={option}
-                      className={draft.outerLayer === option ? "active" : ""}
-                      onClick={() => setDraft({ ...draft, outerLayer: option })}
-                      type="button"
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-
-              <fieldset>
-                <legend>Calzado</legend>
-                <div className="option-grid">
-                  {shoesOptions.map((option) => (
-                    <button
-                      key={option}
-                      className={draft.shoes === option ? "active" : ""}
-                      onClick={() => setDraft({ ...draft, shoes: option })}
-                      type="button"
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-
-              <fieldset>
-                <legend>Accesorios</legend>
-                <div className="option-grid compact-options">
-                  {accessoryOptions.map((option) => {
-                    const selected = draft.accessories
-                      .split(",")
-                      .map((item) => item.trim())
-                      .includes(option);
-
-                    return (
-                      <button
-                        key={option}
-                        className={selected ? "active" : ""}
-                        onClick={() => toggleAccessory(option)}
-                        type="button"
-                      >
-                        {option}
-                      </button>
-                    );
-                  })}
-                </div>
-              </fieldset>
-
-              <div className="form-grid">
-                <label>
-                  Actividad
-                  <select
-                    value={draft.activity}
-                    onChange={(event) =>
-                      setDraft({ ...draft, activity: event.target.value })
-                    }
-                  >
-                    {activityOptions.map((option) => (
-                      <option key={option}>{option}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Tiempo interior/exterior
-                  <select
-                    value={draft.indoorTime}
-                    onChange={(event) =>
-                      setDraft({ ...draft, indoorTime: event.target.value })
-                    }
-                  >
-                    {indoorTimeOptions.map((option) => (
-                      <option key={option}>{option}</option>
-                    ))}
-                  </select>
-                </label>
+            {!isWizardOpen ? (
+              <div className="start-registration">
+                <p>
+                  Responde una pregunta a la vez. La app guarda clima, ropa,
+                  actividad y como te sentiste para mejorar la recomendacion.
+                </p>
+                <button className="primary-button" onClick={openWizard}>
+                  REGISTRAR
+                </button>
               </div>
-            </div>
+            ) : (
+              <div className="wizard-card">
+                <div className="wizard-progress">
+                  <span
+                    style={{
+                      width: `${((wizardStep + 1) / wizardSteps.length) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="wizard-counter">
+                  Pregunta {wizardStep + 1} de {wizardSteps.length}
+                </p>
 
-            <div className="feeling-control">
-              <p>Resultado real</p>
-              <div>
-                {[-2, -1, 0, 1, 2].map((value) => (
+                {renderWizardStep()}
+
+                <div className="wizard-actions">
                   <button
-                    key={value}
-                    className={draft.feeling === value ? "active" : ""}
-                    onClick={() => setDraft({ ...draft, feeling: value })}
-                    type="button"
+                    className="secondary-button"
+                    disabled={wizardStep === 0 || isSaving}
+                    onClick={previousWizardStep}
                   >
-                    {feelingLabels[value]}
+                    Atras
                   </button>
-                ))}
+                  <button
+                    className="secondary-button"
+                    disabled={isSaving}
+                    onClick={closeWizard}
+                  >
+                    Cancelar
+                  </button>
+                  {wizardStep >= wizardSteps.length - 1 ? (
+                    <button
+                      className="primary-button compact"
+                      disabled={isSaving}
+                      onClick={saveRecord}
+                    >
+                      {isSaving ? "Guardando..." : "Guardar"}
+                    </button>
+                  ) : (
+                    <button
+                      className="primary-button compact"
+                      disabled={isSaving}
+                      onClick={nextWizardStep}
+                    >
+                      Siguiente
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-
-            <label className="notes-field">
-              Nota opcional
-              <textarea
-                placeholder="Ej: en la sombra tuve frio, pero caminando estaba bien."
-                value={draft.notes}
-                onChange={(event) =>
-                  setDraft({ ...draft, notes: event.target.value })
-                }
-              />
-            </label>
-
-            <button
-              className="primary-button"
-              disabled={isSaving}
-              onClick={saveRecord}
-            >
-              {isSaving ? "Guardando..." : "Guardar registro"}
-            </button>
+            )}
           </section>
 
           <section className="panel">
