@@ -198,6 +198,55 @@ button:disabled {
   gap: 12px;
 }
 
+.guided-form {
+  display: grid;
+  gap: 16px;
+}
+
+.guided-form fieldset {
+  min-width: 0;
+  border: 1px solid #e0dacd;
+  background: #fbfaf7;
+  padding: 12px;
+}
+
+.guided-form legend {
+  padding: 0 6px;
+  color: #3b4046;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.option-grid button {
+  min-height: 46px;
+  border: 1px solid #cfc7ba;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #30353a;
+  padding: 9px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.option-grid button.active {
+  border-color: #1f5f7a;
+  background: #dcecf3;
+  color: #133e50;
+  box-shadow: inset 0 0 0 1px #1f5f7a;
+}
+
+.compact-options {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
 .weather-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -422,6 +471,11 @@ textarea:focus {
   .weather-grid,
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .option-grid,
+  .compact-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .panel-heading {

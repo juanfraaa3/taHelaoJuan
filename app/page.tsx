@@ -75,6 +75,63 @@ const feelingLabels: Record<number, string> = {
   2: "Mucho calor",
 };
 
+const upperBodyOptions = [
+  "Polera manga corta",
+  "Polera manga larga",
+  "Camisa",
+  "Sweater delgado",
+  "Poleron",
+  "Primera capa",
+];
+
+const lowerBodyOptions = [
+  "Short",
+  "Jeans",
+  "Pantalon tela",
+  "Buzo",
+  "Pantalon termico",
+];
+
+const outerLayerOptions = [
+  "Sin chaqueta",
+  "Chaqueta delgada",
+  "Cortaviento",
+  "Chaqueta abrigada",
+  "Impermeable",
+  "Abrigo grueso",
+];
+
+const shoesOptions = [
+  "Zapatillas",
+  "Zapatos cerrados",
+  "Bototos",
+  "Sandalias",
+  "Zapatos impermeables",
+];
+
+const accessoryOptions = [
+  "Gorro",
+  "Bufanda",
+  "Guantes",
+  "Paraguas",
+  "Lentes",
+  "Mochila",
+];
+
+const activityOptions = [
+  "Caminata suave",
+  "Transporte publico",
+  "Auto / taxi",
+  "Ejercicio",
+  "Estar quieto afuera",
+];
+
+const indoorTimeOptions = [
+  "Principalmente exterior",
+  "Mitad interior / mitad exterior",
+  "Principalmente interior",
+];
+
 function roundNumber(value: number, digits = 1) {
   return Number.isFinite(value) ? Number(value.toFixed(digits)) : 0;
 }
@@ -311,6 +368,19 @@ export default function Home() {
       source: "manual",
       updatedAt: new Date().toISOString(),
     }));
+  }
+
+  function toggleAccessory(accessory: string) {
+    const selectedAccessories = draft.accessories
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const alreadySelected = selectedAccessories.includes(accessory);
+    const nextAccessories = alreadySelected
+      ? selectedAccessories.filter((item) => item !== accessory)
+      : [...selectedAccessories, accessory];
+
+    setDraft({ ...draft, accessories: nextAccessories.join(", ") });
   }
 
   async function saveRecord() {
@@ -572,81 +642,122 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="form-grid">
-              <label>
-                Parte superior
-                <input
-                  value={draft.upperBody}
-                  onChange={(event) =>
-                    setDraft({ ...draft, upperBody: event.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Parte inferior
-                <input
-                  value={draft.lowerBody}
-                  onChange={(event) =>
-                    setDraft({ ...draft, lowerBody: event.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Chaqueta / capa exterior
-                <input
-                  value={draft.outerLayer}
-                  onChange={(event) =>
-                    setDraft({ ...draft, outerLayer: event.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Calzado
-                <input
-                  value={draft.shoes}
-                  onChange={(event) =>
-                    setDraft({ ...draft, shoes: event.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Accesorios
-                <input
-                  placeholder="Gorro, bufanda, guantes, mochila..."
-                  value={draft.accessories}
-                  onChange={(event) =>
-                    setDraft({ ...draft, accessories: event.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Actividad
-                <select
-                  value={draft.activity}
-                  onChange={(event) =>
-                    setDraft({ ...draft, activity: event.target.value })
-                  }
-                >
-                  <option>Caminata suave</option>
-                  <option>Transporte publico</option>
-                  <option>Auto / taxi</option>
-                  <option>Ejercicio</option>
-                  <option>Estar quieto afuera</option>
-                </select>
-              </label>
-              <label>
-                Tiempo interior/exterior
-                <select
-                  value={draft.indoorTime}
-                  onChange={(event) =>
-                    setDraft({ ...draft, indoorTime: event.target.value })
-                  }
-                >
-                  <option>Principalmente exterior</option>
-                  <option>Mitad interior / mitad exterior</option>
-                  <option>Principalmente interior</option>
-                </select>
-              </label>
+            <div className="guided-form">
+              <fieldset>
+                <legend>Parte superior</legend>
+                <div className="option-grid">
+                  {upperBodyOptions.map((option) => (
+                    <button
+                      key={option}
+                      className={draft.upperBody === option ? "active" : ""}
+                      onClick={() => setDraft({ ...draft, upperBody: option })}
+                      type="button"
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Parte inferior</legend>
+                <div className="option-grid">
+                  {lowerBodyOptions.map((option) => (
+                    <button
+                      key={option}
+                      className={draft.lowerBody === option ? "active" : ""}
+                      onClick={() => setDraft({ ...draft, lowerBody: option })}
+                      type="button"
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Capa exterior</legend>
+                <div className="option-grid">
+                  {outerLayerOptions.map((option) => (
+                    <button
+                      key={option}
+                      className={draft.outerLayer === option ? "active" : ""}
+                      onClick={() => setDraft({ ...draft, outerLayer: option })}
+                      type="button"
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Calzado</legend>
+                <div className="option-grid">
+                  {shoesOptions.map((option) => (
+                    <button
+                      key={option}
+                      className={draft.shoes === option ? "active" : ""}
+                      onClick={() => setDraft({ ...draft, shoes: option })}
+                      type="button"
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Accesorios</legend>
+                <div className="option-grid compact-options">
+                  {accessoryOptions.map((option) => {
+                    const selected = draft.accessories
+                      .split(",")
+                      .map((item) => item.trim())
+                      .includes(option);
+
+                    return (
+                      <button
+                        key={option}
+                        className={selected ? "active" : ""}
+                        onClick={() => toggleAccessory(option)}
+                        type="button"
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+
+              <div className="form-grid">
+                <label>
+                  Actividad
+                  <select
+                    value={draft.activity}
+                    onChange={(event) =>
+                      setDraft({ ...draft, activity: event.target.value })
+                    }
+                  >
+                    {activityOptions.map((option) => (
+                      <option key={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Tiempo interior/exterior
+                  <select
+                    value={draft.indoorTime}
+                    onChange={(event) =>
+                      setDraft({ ...draft, indoorTime: event.target.value })
+                    }
+                  >
+                    {indoorTimeOptions.map((option) => (
+                      <option key={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             </div>
 
             <div className="feeling-control">
