@@ -667,6 +667,77 @@ export default function Home() {
     );
   }
 
+  if (isWizardOpen) {
+    return (
+      <main className="wizard-page min-h-screen bg-[#f4f2ed] text-[#181b1f]">
+        <section className="wizard-shell">
+          <div className="wizard-topbar">
+            <div>
+              <p className="eyebrow">taHelaoJuan</p>
+              <h1>Registrar salida</h1>
+            </div>
+            <button
+              className="secondary-button"
+              disabled={isSaving}
+              onClick={closeWizard}
+            >
+              Cerrar
+            </button>
+          </div>
+
+          <div className="wizard-weather-strip">
+            <span>{weather.apparent}° sensacion</span>
+            <span>{weather.humidity}% humedad</span>
+            <span>{weather.wind} km/h viento</span>
+          </div>
+
+          <div className="wizard-card focus-wizard-card">
+            <div className="wizard-progress">
+              <span
+                style={{
+                  width: `${((wizardStep + 1) / wizardSteps.length) * 100}%`,
+                }}
+              />
+            </div>
+            <p className="wizard-counter">
+              Pregunta {wizardStep + 1} de {wizardSteps.length}
+            </p>
+            <h2>{wizardSteps[wizardStep]}</h2>
+
+            {renderWizardStep()}
+
+            <div className="wizard-actions">
+              <button
+                className="secondary-button"
+                disabled={wizardStep === 0 || isSaving}
+                onClick={previousWizardStep}
+              >
+                Atras
+              </button>
+              {wizardStep >= wizardSteps.length - 1 ? (
+                <button
+                  className="primary-button compact"
+                  disabled={isSaving}
+                  onClick={saveRecord}
+                >
+                  {isSaving ? "Guardando..." : "Guardar"}
+                </button>
+              ) : (
+                <button
+                  className="primary-button compact"
+                  disabled={isSaving}
+                  onClick={nextWizardStep}
+                >
+                  Siguiente
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f2ed] text-[#181b1f]">
       <section className="border-b border-[#d8d1c3] bg-[#f9f7f1]">
@@ -853,70 +924,19 @@ export default function Home() {
             <div className="panel-heading">
               <div>
                 <p className="eyebrow">Registro rapido</p>
-                <h2>{isWizardOpen ? wizardSteps[wizardStep] : "Nuevo registro"}</h2>
+                <h2>Nuevo registro</h2>
               </div>
             </div>
 
-            {!isWizardOpen ? (
-              <div className="start-registration">
-                <p>
-                  Responde una pregunta a la vez. La app guarda clima, ropa,
-                  actividad y como te sentiste para mejorar la recomendacion.
-                </p>
-                <button className="primary-button" onClick={openWizard}>
-                  REGISTRAR
-                </button>
-              </div>
-            ) : (
-              <div className="wizard-card">
-                <div className="wizard-progress">
-                  <span
-                    style={{
-                      width: `${((wizardStep + 1) / wizardSteps.length) * 100}%`,
-                    }}
-                  />
-                </div>
-                <p className="wizard-counter">
-                  Pregunta {wizardStep + 1} de {wizardSteps.length}
-                </p>
-
-                {renderWizardStep()}
-
-                <div className="wizard-actions">
-                  <button
-                    className="secondary-button"
-                    disabled={wizardStep === 0 || isSaving}
-                    onClick={previousWizardStep}
-                  >
-                    Atras
-                  </button>
-                  <button
-                    className="secondary-button"
-                    disabled={isSaving}
-                    onClick={closeWizard}
-                  >
-                    Cancelar
-                  </button>
-                  {wizardStep >= wizardSteps.length - 1 ? (
-                    <button
-                      className="primary-button compact"
-                      disabled={isSaving}
-                      onClick={saveRecord}
-                    >
-                      {isSaving ? "Guardando..." : "Guardar"}
-                    </button>
-                  ) : (
-                    <button
-                      className="primary-button compact"
-                      disabled={isSaving}
-                      onClick={nextWizardStep}
-                    >
-                      Siguiente
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+            <div className="start-registration">
+              <p>
+                Responde una pregunta a la vez. La app guarda clima, ropa,
+                actividad y como te sentiste para mejorar la recomendacion.
+              </p>
+              <button className="primary-button" onClick={openWizard}>
+                REGISTRAR
+              </button>
+            </div>
           </section>
 
           <section className="panel">

@@ -435,6 +435,65 @@ textarea:focus {
   gap: 16px;
 }
 
+.wizard-page {
+  display: grid;
+  align-items: start;
+  padding: 18px;
+}
+
+.wizard-shell {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.wizard-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.wizard-topbar h1 {
+  margin: 0;
+  color: #17191c;
+  font-size: 30px;
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.wizard-weather-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.wizard-weather-strip span {
+  border: 1px solid #d8d1c3;
+  background: #fff;
+  color: #3d444a;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 850;
+  text-align: center;
+}
+
+.focus-wizard-card {
+  border: 1px solid #d8d1c3;
+  background: #ffffff;
+  padding: 18px;
+  box-shadow: 0 16px 34px rgb(40 33 20 / 0.06);
+}
+
+.focus-wizard-card h2 {
+  margin: 0;
+  color: #17191c;
+  font-size: 28px;
+  font-weight: 850;
+  line-height: 1.15;
+}
+
 .wizard-progress {
   height: 10px;
   overflow: hidden;
@@ -612,6 +671,14 @@ textarea:focus {
   }
 
   .wizard-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-topbar {
+    display: grid;
+  }
+
+  .wizard-weather-strip {
     grid-template-columns: 1fr;
   }
 
