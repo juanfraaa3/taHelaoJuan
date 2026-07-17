@@ -1,0 +1,29 @@
+{
+  "name": "tahelaojuan",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "no_bundle": true,
+  "base_dir": "dist/server",
+  "find_additional_modules": true,
+  "assets": {
+    "directory": "dist/client"
+  },
+  "rules": [
+    {
+      "type": "ESModule",
+      "globs": ["**/*.js", "**/*.mjs"]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tahelaojuan-db",
+      "database_id": "39cb6ab7-50c3-4364-8c01-44ad31c1ab93",
+      "migrations_dir": "drizzle"
+    }
+  ]
+}
