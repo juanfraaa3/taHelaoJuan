@@ -113,6 +113,8 @@ const outerLayerOptions = [
   "Abrigo grueso",
 ];
 
+const upperLayerOptions = [...upperBodyOptions, ...outerLayerOptions];
+
 const shoesOptions = [
   "Zapatillas",
   "Zapatos cerrados",
@@ -145,9 +147,8 @@ const indoorTimeOptions = [
 ];
 
 const wizardSteps = [
-  "Parte superior",
+  "Parte superior y capas",
   "Parte inferior",
-  "Capa exterior",
   "Calzado",
   "Accesorios",
   "Actividad",
@@ -282,6 +283,13 @@ async function readApiJson<T>(response: Response): Promise<T> {
   } catch {
     return { error: text } as T;
   }
+}
+
+function splitSelections(value: string) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function WizardOptions({
@@ -532,16 +540,62 @@ export default function Home() {
   }
 
   function toggleAccessory(accessory: string) {
-    const selectedAccessories = draft.accessories
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const selectedAccessories = splitSelections(draft.accessories);
     const alreadySelected = selectedAccessories.includes(accessory);
     const nextAccessories = alreadySelected
       ? selectedAccessories.filter((item) => item !== accessory)
       : [...selectedAccessories, accessory];
 
     setDraft({ ...draft, accessories: nextAccessories.join(", ") });
+  }
+
+  function toggleUpperLayerOption(option: string) {
+    const selectedUpperBody = splitSelections(draft.upperBody);
+    const selectedOuterLayer = splitSelections(draft.outerLayer);
+
+    if (upperBodyOptions.includes(option)) {
+      const nextUpperBody = selectedUpperBody.includes(option)
+        ? selectedUpperBody.filter((item) => item !== option)
+        : [...selectedUpperBody, option];
+
+      setDraft({ ...draft, upperBody: nextUpperBody.join(", ") });
+      return;
+    }
+
+    if (option === "Sin chaqueta") {
+      setDraft({ ...draft, outerLayer: "Sin chaqueta" });
+      return;
+    }
+
+    const nextOuterLayer = selectedOuterLayer.includes(option)
+      ? selectedOuterLayer.filter((item) => item !== option)
+      : [
+          ...selectedOuterLayer.filter((item) => item !== "Sin chaqueta"),
+          option,
+        ];
+
+    setDraft({
+      ...draft,
+      outerLayer:
+        nextOuterLayer.length > 0 ? nextOuterLayer.join(", ") : "Sin chaqueta",
+    });
+  }
+
+  function isUpperLayerSelected(option: string) {
+    if (upperBodyOptions.includes(option)) {
+      return splitSelections(draft.upperBody).includes(option);
+    }
+
+    return splitSelections(draft.outerLayer).includes(option);
+  }
+
+  function canAdvanceWizardStep() {
+    if (wizardStep !== 0) return true;
+
+    return (
+      splitSelections(draft.upperBody).length > 0 &&
+      Boolean(draft.outerLayer)
+    );
   }
 
   function openWizard() {
@@ -566,7 +620,6 @@ export default function Home() {
     field:
       | "upperBody"
       | "lowerBody"
-      | "outerLayer"
       | "shoes"
       | "activity"
       | "indoorTime",
@@ -656,11 +709,24 @@ export default function Home() {
   function renderWizardStep() {
     if (wizardStep === 0) {
       return (
-        <WizardOptions
-          options={upperBodyOptions}
-          selected={draft.upperBody}
-          onSelect={(option) => selectDraftOption("upperBody", option)}
-        />
+        <div className="wizard-stack">
+          <p className="wizard-help">
+            Puedes elegir varias prendas. Marca lo que llevas arriba y tambien
+            si usas chaqueta, abrigo o impermeable.
+          </p>
+          <div className="wizard-options compact-options upper-layer-options">
+            {upperLayerOptions.map((option) => (
+              <button
+                key={option}
+                className={isUpperLayerSelected(option) ? "active" : ""}
+                onClick={() => toggleUpperLayerOption(option)}
+                type="button"
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
       );
     }
 
@@ -677,16 +743,6 @@ export default function Home() {
     if (wizardStep === 2) {
       return (
         <WizardOptions
-          options={outerLayerOptions}
-          selected={draft.outerLayer}
-          onSelect={(option) => selectDraftOption("outerLayer", option)}
-        />
-      );
-    }
-
-    if (wizardStep === 3) {
-      return (
-        <WizardOptions
           options={shoesOptions}
           selected={draft.shoes}
           onSelect={(option) => selectDraftOption("shoes", option)}
@@ -694,7 +750,7 @@ export default function Home() {
       );
     }
 
-    if (wizardStep === 4) {
+    if (wizardStep === 3) {
       return (
         <div className="wizard-stack">
           <p className="wizard-help">
@@ -702,10 +758,9 @@ export default function Home() {
           </p>
           <div className="wizard-options compact-options">
             {accessoryOptions.map((option) => {
-              const selected = draft.accessories
-                .split(",")
-                .map((item) => item.trim())
-                .includes(option);
+              const selected = splitSelections(draft.accessories).includes(
+                option,
+              );
 
               return (
                 <button
@@ -723,7 +778,7 @@ export default function Home() {
       );
     }
 
-    if (wizardStep === 5) {
+    if (wizardStep === 4) {
       return (
         <WizardOptions
           options={activityOptions}
@@ -733,7 +788,7 @@ export default function Home() {
       );
     }
 
-    if (wizardStep === 6) {
+    if (wizardStep === 5) {
       return (
         <WizardOptions
           options={indoorTimeOptions}
@@ -743,7 +798,7 @@ export default function Home() {
       );
     }
 
-    if (wizardStep === 7) {
+    if (wizardStep === 6) {
       return (
         <div className="wizard-options feeling-options">
           {[-2, -1, 0, 1, 2].map((value) => (
@@ -925,7 +980,7 @@ export default function Home() {
               ) : (
                 <button
                   className="primary-button compact"
-                  disabled={isSaving}
+                  disabled={isSaving || !canAdvanceWizardStep()}
                   onClick={nextWizardStep}
                 >
                   Siguiente
@@ -947,6 +1002,7 @@ export default function Home() {
           </a>
 
           <nav className="navbar-links" aria-label="Principal">
+            <a href="/que-usar">Que usar</a>
             <a href="/clima">Clima</a>
             <a href="#modelo">Modelo</a>
             <a href="#historial">Historial</a>

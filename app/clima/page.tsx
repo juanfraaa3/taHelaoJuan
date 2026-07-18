@@ -272,7 +272,10 @@ export default function WeatherPage() {
 
           <nav className="navbar-links" aria-label="Principal">
             <Link href="/">Inicio</Link>
-            <Link href="/clima">Clima</Link>
+            <Link href="/que-usar">Que usar</Link>
+            <Link aria-current="page" className="is-current" href="/clima">
+              Clima
+            </Link>
             <Link href="/#historial">Historial</Link>
           </nav>
 

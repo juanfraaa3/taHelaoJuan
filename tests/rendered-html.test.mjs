@@ -1,87 +1,65 @@
 import assert from "node:assert/strict";
-import { access, readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const developmentPreviewMeta =
-  /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
-const templateRoot = new URL("../", import.meta.url);
-const previewRoot = new URL("../app/_sites-preview/", import.meta.url);
+const root = new URL("../", import.meta.url);
 
-async function render() {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
-
-  return worker.fetch(
-    new Request("http://localhost/", {
-      headers: { accept: "text/html" },
-    }),
-    {
-      ASSETS: {
-        fetch: async () => new Response("Not found", { status: 404 }),
-      },
-    },
-    {
-      waitUntil() {},
-      passThroughOnException() {},
-    },
-  );
+async function source(path) {
+  return readFile(new URL(path, root), "utf8");
 }
 
-test("server-renders the starter loading skeleton", async () => {
-  const response = await render();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
-
-  const html = await response.text();
-  assert.match(html, developmentPreviewMeta);
-  assert.match(html, /<title>Your site is taking shape<\/title>/i);
-  assert.match(html, /Codex is working/);
-  assert.match(html, /Your site is taking shape/);
-  assert.match(html, /Codex is building the first version/);
-  assert.match(html, /react-loading-skeleton/);
-  assert.match(html, /role="status"/);
-});
-
-test("keeps the loading skeleton scoped and disposable", async () => {
-  const [preview, css, page, layout, packageJson, files] = await Promise.all([
-    readFile(new URL("SkeletonPreview.tsx", previewRoot), "utf8"),
-    readFile(new URL("preview.css", previewRoot), "utf8"),
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../package.json", import.meta.url), "utf8"),
-    readdir(previewRoot),
+test("adds Que usar to the visible navigation", async () => {
+  const [home, weather, queUsar] = await Promise.all([
+    source("app/page.tsx"),
+    source("app/clima/page.tsx"),
+    source("app/que-usar/page.tsx"),
   ]);
 
-  assert.deepEqual(files.sort(), ["SkeletonPreview.tsx", "preview.css"]);
-  assert.match(preview, /from "react-loading-skeleton"/);
-  assert.match(preview, /baseColor="#eceae7"/);
-  assert.match(preview, /highlightColor="#f9f8f6"/);
-  assert.match(preview, /duration=\{2\.8\}/);
-  assert.match(preview, /sites-skeleton-search-placeholder/);
-  assert.match(packageJson, /"react-loading-skeleton": "3\.5\.0"/);
+  assert.match(home, /href="\/que-usar"/);
+  assert.match(weather, /href="\/que-usar"/);
+  assert.match(queUsar, /aria-current="page" className="is-current" href="\/que-usar"/);
+  assert.match(queUsar, />\s*Que usar\s*</);
+});
 
-  const shellIndex = preview.indexOf('className="sites-skeleton-shell"');
-  const statusIndex = preview.indexOf('className="sites-skeleton-status"');
-  assert.ok(shellIndex >= 0 && statusIndex > shellIndex);
-  assert.match(css, /position:\s*fixed/);
-  assert.match(css, /inset:\s*0/);
-  assert.match(css, /opacity:\s*0\.52/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.doesNotMatch(css, /#020617|canvas|pets|progress/i);
-  assert.doesNotMatch(
-    preview,
-    /loading-spinner|status-mark|status-progress|canvas|cookie|random/i,
-  );
+test("builds the decision view around conditions, evidence and variants", async () => {
+  const page = await source("app/que-usar/page.tsx");
 
-  assert.match(page, /export const metadata:\s*Metadata/);
-  assert.match(page, /"codex-preview": "development"/);
-  assert.match(page, /<SkeletonPreview \/>/);
-  assert.match(layout, /title:\s*"Starter Project"/);
-  assert.doesNotMatch(layout, /codex-preview|_sites-preview|themeColor|\bViewport\b/);
-  assert.doesNotMatch(css, /(^|\s)(html|body)\s*\{/m);
+  assert.match(page, /buildRecommendation/);
+  assert.match(page, /buildScenarioPlans/);
+  assert.match(page, /buildCoverageRows/);
+  assert.match(page, /\/api\/outfit-insights/);
+  assert.match(page, /Combinacion recomendada/);
+  assert.match(page, /Combinaciones reales/);
+  assert.match(page, /Casos frecuentes/);
+});
 
-  await assert.rejects(
-    access(new URL("public/_sites-preview", templateRoot)),
-  );
+test("merges upper body and outer layer into one multi-select wizard step", async () => {
+  const home = await source("app/page.tsx");
+
+  assert.match(home, /const upperLayerOptions = \[\.\.\.upperBodyOptions, \.\.\.outerLayerOptions\]/);
+  assert.match(home, /"Parte superior y capas"/);
+  assert.match(home, /toggleUpperLayerOption/);
+  assert.match(home, /upperLayerOptions\.map/);
+  assert.match(home, /disabled=\{isSaving \|\| !canAdvanceWizardStep\(\)\}/);
+  assert.doesNotMatch(home, /"Capa exterior"/);
+});
+
+test("keeps community insights anonymous", async () => {
+  const route = await source("app/api/outfit-insights/route.ts");
+
+  assert.match(route, /samples/);
+  assert.match(route, /upperBody/);
+  assert.match(route, /lowerBody/);
+  assert.match(route, /outerLayer/);
+  assert.doesNotMatch(route, /userEmail|notes|password/i);
+});
+
+test("includes responsive styling for the Que usar dashboard", async () => {
+  const css = await source("app/globals.css");
+
+  assert.match(css, /\.use-dashboard/);
+  assert.match(css, /\.use-outfit-grid/);
+  assert.match(css, /\.use-scenario-grid/);
+  assert.match(css, /\.use-coverage-grid/);
+  assert.match(css, /@media \(max-width: 760px\)/);
 });
