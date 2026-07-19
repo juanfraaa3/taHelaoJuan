@@ -17,14 +17,28 @@ export const metadata: Metadata = {
   description:
     "Registro personal de clima, ropa y sensacion termica para recomendar que ponerse.",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: [
+      {
+        url: "/favicon.png",
+        type: "image/png",
+      },
+    ],
+    shortcut: "/favicon.png",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: "taHelaoJuan",
     description:
       "Una app personal para aprender con que ropa sales comodo segun el clima real.",
     type: "website",
+    images: [
+      {
+        url: "/tahelaojuan-logo.png",
+        width: 512,
+        height: 512,
+        alt: "taHelaoJuan",
+      },
+    ],
   },
 };
 

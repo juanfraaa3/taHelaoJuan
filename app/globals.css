@@ -72,16 +72,17 @@ button:disabled {
   text-decoration: none;
 }
 
-.navbar-brand::before {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #ea580c, #f59e0b);
-  box-shadow: 0 0 0 5px #ffedd5;
-  content: "";
+.navbar-brand-logo {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  background: #ffffff url("/tahelaojuan-logo.png") center / cover no-repeat;
+  box-shadow: 0 8px 18px rgb(154 52 18 / 0.12);
 }
 
-.navbar-brand span {
+.navbar-brand-label {
   font-size: 15px;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -220,6 +221,41 @@ button:disabled {
   background: #fffaf5;
   padding: 24px;
   box-shadow: 0 16px 34px rgb(154 52 18 / 0.08);
+}
+
+.brand-lockup,
+.hero-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-lockup {
+  margin-bottom: 14px;
+}
+
+.brand-lockup-logo,
+.hero-brand-logo {
+  flex: 0 0 auto;
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+  background: #ffffff url("/tahelaojuan-logo.png") center / cover no-repeat;
+  box-shadow: 0 10px 22px rgb(154 52 18 / 0.12);
+}
+
+.brand-lockup-logo {
+  width: 52px;
+  height: 52px;
+}
+
+.hero-brand-logo {
+  width: 44px;
+  height: 44px;
+}
+
+.brand-lockup .eyebrow,
+.hero-brand .eyebrow {
+  margin: 0;
 }
 
 .auth-panel h1 {

@@ -267,7 +267,8 @@ export default function WeatherPage() {
       <header className="app-navbar">
         <div className="app-navbar-inner">
           <Link className="navbar-brand" href="/">
-            <span>taHelaoJuan</span>
+            <span className="navbar-brand-logo" aria-hidden="true" />
+            <span className="navbar-brand-label">taHelaoJuan</span>
           </Link>
 
           <nav className="navbar-links" aria-label="Principal">

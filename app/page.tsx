@@ -931,7 +931,10 @@ export default function Home() {
     return (
       <main className="auth-page min-h-screen bg-[#fff7ed] text-[#21120a]">
         <section className="auth-panel">
-          <p className="eyebrow">taHelaoJuan</p>
+          <div className="brand-lockup">
+            <span className="brand-lockup-logo" aria-hidden="true" />
+            <p className="eyebrow">taHelaoJuan</p>
+          </div>
           <h1>Cargando sesion</h1>
         </section>
       </main>
@@ -942,7 +945,10 @@ export default function Home() {
     return (
       <main className="auth-page min-h-screen bg-[#fff7ed] text-[#21120a]">
         <section className="auth-panel">
-          <p className="eyebrow">taHelaoJuan</p>
+          <div className="brand-lockup">
+            <span className="brand-lockup-logo" aria-hidden="true" />
+            <p className="eyebrow">taHelaoJuan</p>
+          </div>
           <h1>{authMode === "login" ? "Entrar" : "Crear cuenta"}</h1>
 
           <form className="auth-form" onSubmit={submitAuth}>
@@ -1011,7 +1017,10 @@ export default function Home() {
         <section className="wizard-shell">
           <div className="wizard-topbar">
             <div>
-              <p className="eyebrow">taHelaoJuan</p>
+              <div className="brand-lockup">
+                <span className="brand-lockup-logo" aria-hidden="true" />
+                <p className="eyebrow">taHelaoJuan</p>
+              </div>
               <h1>Registrar salida</h1>
             </div>
             <button
@@ -1081,7 +1090,8 @@ export default function Home() {
       <header className="app-navbar">
         <div className="app-navbar-inner">
           <a className="navbar-brand" href="#">
-            <span>taHelaoJuan</span>
+            <span className="navbar-brand-logo" aria-hidden="true" />
+            <span className="navbar-brand-label">taHelaoJuan</span>
           </a>
 
           <nav className="navbar-links" aria-label="Principal">
@@ -1107,9 +1117,12 @@ export default function Home() {
         <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-8">
           <div className="flex flex-col justify-between gap-6">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#c2410c]">
-                taHelaoJuan
-              </p>
+              <div className="hero-brand">
+                <span className="hero-brand-logo" aria-hidden="true" />
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#c2410c]">
+                  taHelaoJuan
+                </p>
+              </div>
               <h1 className="mt-3 max-w-3xl text-4xl font-semibold leading-tight text-[#21120a] sm:text-5xl">
                 Decide que ponerte con datos tuyos, no con pura intuicion.
               </h1>
