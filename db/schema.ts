@@ -23,6 +23,8 @@ export const outfitRecords = sqliteTable(
     activity: text("activity").notNull(),
     indoorTime: text("indoor_time").notNull(),
     feeling: integer("feeling").notNull(),
+    doubles: text("doubles").notNull().default(""),
+    heating: text("heating").notNull().default("Sin calefaccion"),
     notes: text("notes").notNull().default(""),
   },
   (table) => [

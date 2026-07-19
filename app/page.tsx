@@ -33,6 +33,8 @@ type OutfitRecord = {
   activity: string;
   indoorTime: string;
   feeling: number;
+  doubles: string;
+  heating: string;
   notes: string;
 };
 
@@ -56,7 +58,9 @@ type DraftRecord = {
   accessories: string;
   activity: string;
   indoorTime: string;
-  feeling: number;
+  feeling: number | null;
+  doubles: string;
+  heating: string;
   notes: string;
 };
 
@@ -75,32 +79,47 @@ const defaultWeather: WeatherData = {
 };
 
 const defaultDraft: DraftRecord = {
-  upperBody: "Polera manga corta",
-  lowerBody: "Jeans",
+  upperBody: "",
+  lowerBody: "",
   outerLayer: "Sin chaqueta",
-  shoes: "Zapatillas",
+  shoes: "",
   accessories: "",
-  activity: "Caminata suave",
-  indoorTime: "Mitad interior / mitad exterior",
-  feeling: 0,
+  activity: "",
+  indoorTime: "",
+  feeling: null,
+  doubles: "",
+  heating: "",
   notes: "",
 };
 
 const feelingLabels: Record<number, string> = {
   [-2]: "Mucho frio",
-  [-1]: "Algo de frio",
+  [-1]: "Frio",
   0: "Comodo",
   1: "Algo de calor",
   2: "Mucho calor",
 };
 
 const upperBodyOptions = [
-  "Polera manga corta",
+  "Polera",
   "Polera manga larga",
   "Camisa",
   "Sweater delgado",
   "Poleron",
   "Primera capa",
+  "Chaqueta delgada",
+  "Cortaviento",
+  "Chaqueta abrigada",
+  "Impermeable",
+  "Abrigo grueso",
+];
+
+const outerLayerOptions = [
+  "Chaqueta delgada",
+  "Cortaviento",
+  "Chaqueta abrigada",
+  "Impermeable",
+  "Abrigo grueso",
 ];
 
 const lowerBodyOptions = [
@@ -111,23 +130,14 @@ const lowerBodyOptions = [
   "Pantalon termico",
 ];
 
-const outerLayerOptions = [
-  "Sin chaqueta",
-  "Chaqueta delgada",
-  "Cortaviento",
-  "Chaqueta abrigada",
-  "Impermeable",
-  "Abrigo grueso",
-];
-
-const upperLayerOptions = [...upperBodyOptions, ...outerLayerOptions];
-
 const shoesOptions = [
   "Zapatillas",
   "Zapatos cerrados",
+  "Zapatos abiertos",
   "Bototos",
   "Sandalias",
   "Zapatos impermeables",
+  "Descalzo",
 ];
 
 const accessoryOptions = [
@@ -141,27 +151,45 @@ const accessoryOptions = [
 
 const activityOptions = [
   "Caminata suave",
-  "Transporte publico",
-  "Auto / taxi",
+  "Metro",
+  "Micro",
+  "Auto/taxi",
   "Ejercicio",
-  "Estar quieto afuera",
+  "Estar quieto afuera sentado",
+  "Estar quieto afuera parado",
 ];
 
 const indoorTimeOptions = [
-  "Principalmente exterior",
-  "Mitad interior / mitad exterior",
-  "Principalmente interior",
+  "Al exterior",
+  "Mitad exterior mitad interior",
+  "Interior",
+];
+
+const doublesOptions = [
+  "Doble calcetin",
+  "Doble polera",
+  "Doble poleron",
+  "Doble pantalon",
+];
+
+const heatingOptions = [
+  "Calefaccion baja",
+  "Calefaccion intermedia",
+  "Calefaccion alta",
+  "Sin calefaccion",
 ];
 
 const wizardSteps = [
-  "Parte superior y capas",
+  "Parte superior",
   "Parte inferior",
   "Calzado",
   "Accesorios",
   "Actividad",
-  "Interior/exterior",
+  "Ubicacion",
   "Sensacion",
-  "Confirmar",
+  "Dobles",
+  "Calefaccion",
+  "Algo extra que quieras recordar",
 ];
 
 function roundNumber(value: number, digits = 1) {
@@ -297,6 +325,20 @@ function splitSelections(value: string) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function joinSelections(values: string[]) {
+  return values.join(", ");
+}
+
+function deriveOuterLayer(upperBody: string) {
+  const selectedLayers = splitSelections(upperBody).filter((item) =>
+    outerLayerOptions.includes(item),
+  );
+
+  return selectedLayers.length > 0
+    ? joinSelections(selectedLayers)
+    : "Sin chaqueta";
 }
 
 function WizardOptions({
@@ -559,62 +601,38 @@ export default function Home() {
   }
 
   function toggleAccessory(accessory: string) {
-    const selectedAccessories = splitSelections(draft.accessories);
-    const alreadySelected = selectedAccessories.includes(accessory);
-    const nextAccessories = alreadySelected
-      ? selectedAccessories.filter((item) => item !== accessory)
-      : [...selectedAccessories, accessory];
-
-    setDraft({ ...draft, accessories: nextAccessories.join(", ") });
+    toggleDraftMultiOption("accessories", accessory);
   }
 
-  function toggleUpperLayerOption(option: string) {
-    const selectedUpperBody = splitSelections(draft.upperBody);
-    const selectedOuterLayer = splitSelections(draft.outerLayer);
+  function toggleDraftMultiOption(
+    field: "upperBody" | "lowerBody" | "accessories" | "doubles",
+    option: string,
+  ) {
+    const selected = splitSelections(draft[field]);
+    const nextSelections = selected.includes(option)
+      ? selected.filter((item) => item !== option)
+      : [...selected, option];
+    const nextValue = joinSelections(nextSelections);
 
-    if (upperBodyOptions.includes(option)) {
-      const nextUpperBody = selectedUpperBody.includes(option)
-        ? selectedUpperBody.filter((item) => item !== option)
-        : [...selectedUpperBody, option];
-
-      setDraft({ ...draft, upperBody: nextUpperBody.join(", ") });
-      return;
-    }
-
-    if (option === "Sin chaqueta") {
-      setDraft({ ...draft, outerLayer: "Sin chaqueta" });
-      return;
-    }
-
-    const nextOuterLayer = selectedOuterLayer.includes(option)
-      ? selectedOuterLayer.filter((item) => item !== option)
-      : [
-          ...selectedOuterLayer.filter((item) => item !== "Sin chaqueta"),
-          option,
-        ];
-
-    setDraft({
-      ...draft,
-      outerLayer:
-        nextOuterLayer.length > 0 ? nextOuterLayer.join(", ") : "Sin chaqueta",
-    });
-  }
-
-  function isUpperLayerSelected(option: string) {
-    if (upperBodyOptions.includes(option)) {
-      return splitSelections(draft.upperBody).includes(option);
-    }
-
-    return splitSelections(draft.outerLayer).includes(option);
+    setDraft((current) => ({
+      ...current,
+      [field]: nextValue,
+      ...(field === "upperBody"
+        ? { outerLayer: deriveOuterLayer(nextValue) }
+        : {}),
+    }));
   }
 
   function canAdvanceWizardStep() {
-    if (wizardStep !== 0) return true;
+    if (wizardStep === 0) return splitSelections(draft.upperBody).length > 0;
+    if (wizardStep === 1) return splitSelections(draft.lowerBody).length > 0;
+    if (wizardStep === 2) return Boolean(draft.shoes);
+    if (wizardStep === 4) return Boolean(draft.activity);
+    if (wizardStep === 5) return Boolean(draft.indoorTime);
+    if (wizardStep === 6) return draft.feeling !== null;
+    if (wizardStep === 8) return Boolean(draft.heating);
 
-    return (
-      splitSelections(draft.upperBody).length > 0 &&
-      Boolean(draft.outerLayer)
-    );
+    return true;
   }
 
   function openWizard() {
@@ -637,11 +655,10 @@ export default function Home() {
 
   function selectDraftOption(
     field:
-      | "upperBody"
-      | "lowerBody"
       | "shoes"
       | "activity"
-      | "indoorTime",
+      | "indoorTime"
+      | "heating",
     value: string,
   ) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -654,6 +671,8 @@ export default function Home() {
       createdAt: new Date().toISOString(),
       weather,
       ...draft,
+      outerLayer: deriveOuterLayer(draft.upperBody),
+      feeling: draft.feeling ?? 0,
     };
 
     setIsSaving(true);
@@ -728,34 +747,43 @@ export default function Home() {
   function renderWizardStep() {
     if (wizardStep === 0) {
       return (
-        <div className="wizard-stack">
-          <p className="wizard-help">
-            Puedes elegir varias prendas. Marca lo que llevas arriba y tambien
-            si usas chaqueta, abrigo o impermeable.
-          </p>
-          <div className="wizard-options compact-options upper-layer-options">
-            {upperLayerOptions.map((option) => (
-              <button
-                key={option}
-                className={isUpperLayerSelected(option) ? "active" : ""}
-                onClick={() => toggleUpperLayerOption(option)}
-                type="button"
-              >
-                {option}
-              </button>
-            ))}
-          </div>
+        <div className="wizard-options compact-options">
+          {upperBodyOptions.map((option) => (
+            <button
+              key={option}
+              className={
+                splitSelections(draft.upperBody).includes(option)
+                  ? "active"
+                  : ""
+              }
+              onClick={() => toggleDraftMultiOption("upperBody", option)}
+              type="button"
+            >
+              {option}
+            </button>
+          ))}
         </div>
       );
     }
 
     if (wizardStep === 1) {
       return (
-        <WizardOptions
-          options={lowerBodyOptions}
-          selected={draft.lowerBody}
-          onSelect={(option) => selectDraftOption("lowerBody", option)}
-        />
+        <div className="wizard-options compact-options">
+          {lowerBodyOptions.map((option) => (
+            <button
+              key={option}
+              className={
+                splitSelections(draft.lowerBody).includes(option)
+                  ? "active"
+                  : ""
+              }
+              onClick={() => toggleDraftMultiOption("lowerBody", option)}
+              type="button"
+            >
+              {option}
+            </button>
+          ))}
+        </div>
       );
     }
 
@@ -776,22 +804,20 @@ export default function Home() {
             Puedes elegir varios. Si no llevas accesorios, solo avanza.
           </p>
           <div className="wizard-options compact-options">
-            {accessoryOptions.map((option) => {
-              const selected = splitSelections(draft.accessories).includes(
-                option,
-              );
-
-              return (
-                <button
-                  key={option}
-                  className={selected ? "active" : ""}
-                  onClick={() => toggleAccessory(option)}
-                  type="button"
-                >
-                  {option}
-                </button>
-              );
-            })}
+            {accessoryOptions.map((option) => (
+              <button
+                key={option}
+                className={
+                  splitSelections(draft.accessories).includes(option)
+                    ? "active"
+                    : ""
+                }
+                onClick={() => toggleAccessory(option)}
+                type="button"
+              >
+                {option}
+              </button>
+            ))}
           </div>
         </div>
       );
@@ -837,20 +863,45 @@ export default function Home() {
       );
     }
 
+    if (wizardStep === 7) {
+      return (
+        <div className="wizard-stack">
+          <p className="wizard-help">
+            Puedes elegir varios. Si no aplica ninguno, solo avanza.
+          </p>
+          <div className="wizard-options compact-options">
+            {doublesOptions.map((option) => (
+              <button
+                key={option}
+                className={
+                  splitSelections(draft.doubles).includes(option)
+                    ? "active"
+                    : ""
+                }
+                onClick={() => toggleDraftMultiOption("doubles", option)}
+                type="button"
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (wizardStep === 8) {
+      return (
+        <WizardOptions
+          options={heatingOptions}
+          selected={draft.heating}
+          onSelect={(option) => selectDraftOption("heating", option)}
+        />
+      );
+    }
+
     return (
       <div className="wizard-stack">
-        <div className="answer-summary">
-          <span>{draft.upperBody}</span>
-          <span>{draft.lowerBody}</span>
-          <span>{draft.outerLayer}</span>
-          <span>{draft.shoes}</span>
-          <span>{draft.accessories || "Sin accesorios"}</span>
-          <span>{draft.activity}</span>
-          <span>{draft.indoorTime}</span>
-          <span>{feelingLabels[draft.feeling]}</span>
-        </div>
         <label className="notes-field">
-          Algo extra que quieras recordar
           <textarea
             placeholder="Ej: en la sombra tuve frio, pero caminando estaba bien."
             value={draft.notes}
@@ -859,6 +910,19 @@ export default function Home() {
             }
           />
         </label>
+        <div className="answer-summary">
+          <span>{draft.upperBody}</span>
+          <span>{draft.lowerBody}</span>
+          <span>{draft.shoes}</span>
+          <span>{draft.accessories || "Sin accesorios"}</span>
+          <span>{draft.activity}</span>
+          <span>{draft.indoorTime}</span>
+          <span>
+            {draft.feeling === null ? "Sin sensacion" : feelingLabels[draft.feeling]}
+          </span>
+          <span>{draft.doubles || "Sin dobles"}</span>
+          <span>{draft.heating}</span>
+        </div>
       </div>
     );
   }
@@ -1281,6 +1345,12 @@ export default function Home() {
                         {record.upperBody}, {record.lowerBody},{" "}
                         {record.outerLayer}
                       </p>
+                      {(record.doubles || record.heating) && (
+                        <p>
+                          {record.doubles || "Sin dobles"} ·{" "}
+                          {record.heating || "Sin calefaccion"}
+                        </p>
+                      )}
                       <span>{feelingLabels[record.feeling]}</span>
                     </div>
                     <button onClick={() => deleteRecord(record.id)}>Borrar</button>

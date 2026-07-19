@@ -26,6 +26,8 @@ type OutfitSample = {
   activity: string;
   indoorTime: string;
   feeling: number;
+  doubles: string;
+  heating: string;
 };
 
 type ConditionContext = {
@@ -79,6 +81,8 @@ type CommunityCombo = {
   outerLayer: string;
   shoes: string;
   accessories: string;
+  doubles: string;
+  heating: string;
 };
 
 const STORAGE_KEY = "tahelaojuan-registros-v1";
@@ -97,16 +101,18 @@ const defaultWeather: WeatherData = {
 
 const activityOptions = [
   "Caminata suave",
-  "Transporte publico",
-  "Auto / taxi",
+  "Metro",
+  "Micro",
+  "Auto/taxi",
   "Ejercicio",
-  "Estar quieto afuera",
+  "Estar quieto afuera sentado",
+  "Estar quieto afuera parado",
 ];
 
 const indoorTimeOptions = [
-  "Principalmente exterior",
-  "Mitad interior / mitad exterior",
-  "Principalmente interior",
+  "Al exterior",
+  "Mitad exterior mitad interior",
+  "Interior",
 ];
 
 const sensitivityOptions = ["Balanceado", "Friolento", "Caluroso"];
@@ -114,13 +120,21 @@ const timeOfDayOptions = ["Manana", "Mediodia", "Tarde", "Noche"];
 
 const activityAdjustment: Record<string, number> = {
   "Caminata suave": -0.4,
+  Metro: 0.15,
+  Micro: 0.1,
+  "Auto/taxi": -0.5,
   "Transporte publico": 0.1,
   "Auto / taxi": -0.5,
   Ejercicio: -2,
+  "Estar quieto afuera sentado": 1.45,
+  "Estar quieto afuera parado": 1.15,
   "Estar quieto afuera": 1.3,
 };
 
 const indoorAdjustment: Record<string, number> = {
+  "Al exterior": 1,
+  "Mitad exterior mitad interior": 0,
+  Interior: -0.9,
   "Principalmente exterior": 1,
   "Mitad interior / mitad exterior": 0,
   "Principalmente interior": -0.9,
@@ -146,6 +160,7 @@ const upperWarmth = [
   ["manga larga", 2],
   ["camisa", 1.8],
   ["manga corta", 1],
+  ["polera", 1],
 ] as const;
 
 const lowerWarmth = [
@@ -169,8 +184,10 @@ const shoesWarmth = [
   ["impermeables", 2],
   ["bototos", 2],
   ["cerrados", 1.5],
+  ["abiertos", 0.65],
   ["zapatillas", 1.1],
   ["sandalias", 0.4],
+  ["descalzo", 0],
 ] as const;
 
 const coverageCases = [
@@ -208,7 +225,7 @@ function weatherIsRainy(weather: WeatherData) {
 }
 
 function isMostlyOutside(indoorTime: string) {
-  return indoorTime !== "Principalmente interior";
+  return indoorTime !== "Interior" && indoorTime !== "Principalmente interior";
 }
 
 function optionWarmth(value: string, rules: readonly (readonly [string, number])[], fallback: number) {
@@ -229,13 +246,26 @@ function accessoryWarmth(accessories: string) {
   return score;
 }
 
+function doublesWarmth(doubles: string) {
+  const normalizedValue = normalize(doubles);
+  let score = 0;
+
+  if (normalizedValue.includes("doble calcetin")) score += 0.35;
+  if (normalizedValue.includes("doble polera")) score += 0.55;
+  if (normalizedValue.includes("doble poleron")) score += 0.9;
+  if (normalizedValue.includes("doble pantalon")) score += 0.75;
+
+  return score;
+}
+
 function inferOutfitWarmth(sample: OutfitSample) {
   return (
     optionWarmth(sample.upperBody, upperWarmth, 1.8) +
     optionWarmth(sample.lowerBody, lowerWarmth, 1.8) +
     optionWarmth(sample.outerLayer, outerWarmth, 1.5) +
     optionWarmth(sample.shoes, shoesWarmth, 1.1) +
-    accessoryWarmth(sample.accessories)
+    accessoryWarmth(sample.accessories) +
+    doublesWarmth(sample.doubles)
   );
 }
 
@@ -271,12 +301,46 @@ function timeBucketFromDate(value: string) {
   return "Noche";
 }
 
+function activityGroup(activity: string) {
+  if (activity === "Metro" || activity === "Micro" || activity === "Transporte publico") {
+    return "transporte";
+  }
+
+  if (activity === "Auto/taxi" || activity === "Auto / taxi") return "auto";
+  if (activity === "Ejercicio") return "ejercicio";
+  if (activity.includes("quieto afuera")) return "quieto-afuera";
+  return "movimiento-suave";
+}
+
+function indoorGroup(indoorTime: string) {
+  if (indoorTime === "Al exterior" || indoorTime === "Principalmente exterior") {
+    return "exterior";
+  }
+
+  if (
+    indoorTime === "Mitad exterior mitad interior" ||
+    indoorTime === "Mitad interior / mitad exterior"
+  ) {
+    return "mixto";
+  }
+
+  return "interior";
+}
+
 function sampleDistance(sample: OutfitSample, context: ConditionContext) {
   const { weather, activity, indoorTime, timeOfDay } = context;
   const sampleWeather = sample.weather;
   const rainGap = weatherIsRainy(weather) === weatherIsRainy(sampleWeather) ? 0 : 0.75;
-  const activityGap = sample.activity === activity ? 0 : activity === "Ejercicio" || sample.activity === "Ejercicio" ? 1.1 : 0.45;
-  const indoorGap = sample.indoorTime === indoorTime ? 0 : 0.45;
+  const activityGap =
+    activityGroup(sample.activity) === activityGroup(activity)
+      ? sample.activity === activity
+        ? 0
+        : 0.18
+      : activity === "Ejercicio" || sample.activity === "Ejercicio"
+        ? 1.1
+        : 0.45;
+  const indoorGap =
+    indoorGroup(sample.indoorTime) === indoorGroup(indoorTime) ? 0 : 0.45;
   const timeGap = timeBucketFromDate(sample.createdAt) === timeOfDay ? 0 : 0.25;
 
   return (
@@ -344,8 +408,10 @@ function readLocalSamples() {
             shoes: record.shoes,
             accessories: record.accessories || "",
             activity: record.activity || "Caminata suave",
-            indoorTime: record.indoorTime || "Mitad interior / mitad exterior",
+            indoorTime: record.indoorTime || "Mitad exterior mitad interior",
             feeling: clamp(safeNumber(record.feeling, 0), -2, 2),
+            doubles: record.doubles || "",
+            heating: record.heating || "Sin calefaccion",
           });
         }
       });
@@ -368,6 +434,8 @@ function dedupeSamples(samples: OutfitSample[]) {
       sample.lowerBody,
       sample.outerLayer,
       sample.shoes,
+      sample.doubles,
+      sample.heating,
       sample.feeling,
     ].join("|");
 
@@ -383,8 +451,9 @@ function makeOutfitPlan(context: ConditionContext, targetWarmth: number): Outfit
   const windy = weather.wind >= 18 && isMostlyOutside(indoorTime);
   const hot = weather.apparent >= 26;
   const exercise = activity === "Ejercicio";
-  const mostlyIndoor = indoorTime === "Principalmente interior";
-  let upper = "Polera manga corta";
+  const mostlyIndoor =
+    indoorTime === "Interior" || indoorTime === "Principalmente interior";
+  let upper = "Polera";
   let lower = "Jeans liviano";
   let outer = "Sin chaqueta";
   let shoes = "Zapatillas";
@@ -415,12 +484,12 @@ function makeOutfitPlan(context: ConditionContext, targetWarmth: number): Outfit
     outer = rainy ? "Impermeable liviano" : windy || timeOfDay !== "Mediodia" ? "Chaqueta delgada opcional" : "Sin chaqueta";
     shoes = rainy ? "Zapatos impermeables" : "Zapatillas";
   } else if (targetWarmth >= 2.3) {
-    upper = hot ? "Polera manga corta respirable" : "Polera manga corta";
+    upper = hot ? "Polera respirable" : "Polera";
     lower = hot ? "Short o pantalon liviano" : "Jeans liviano";
     outer = rainy ? "Impermeable liviano" : timeOfDay === "Manana" || timeOfDay === "Noche" ? "Capa liviana opcional" : "Sin chaqueta";
     shoes = rainy ? "Zapatos impermeables" : "Zapatillas";
   } else {
-    upper = "Polera manga corta respirable";
+    upper = "Polera respirable";
     lower = "Short o pantalon muy liviano";
     outer = rainy ? "Impermeable liviano" : "Sin chaqueta";
     shoes = rainy ? "Zapatos impermeables" : "Sandalias o zapatillas";
@@ -465,12 +534,16 @@ function groupCommunityCombos(neighbors: Neighbor[], targetWarmth: number) {
     .forEach((neighbor) => {
       const sample = neighbor.sample;
       const accessories = sample.accessories.trim() || "Sin accesorios";
+      const doubles = sample.doubles.trim() || "Sin dobles";
+      const heating = sample.heating.trim() || "Sin calefaccion";
       const key = [
         sample.upperBody,
         sample.lowerBody,
         sample.outerLayer,
         sample.shoes,
         accessories,
+        doubles,
+        heating,
       ].join("|");
       const comfortFactor =
         sample.feeling === 0 ? 1.15 : Math.abs(sample.feeling) === 1 ? 0.72 : 0.36;
@@ -497,6 +570,8 @@ function groupCommunityCombos(neighbors: Neighbor[], targetWarmth: number) {
         outerLayer: sample.outerLayer,
         shoes: sample.shoes,
         accessories,
+        doubles,
+        heating,
       });
     });
 
@@ -590,6 +665,7 @@ function buildRecommendation(samples: OutfitSample[], context: ConditionContext)
     `${plan.upper.toLowerCase()}, ${plan.lower.toLowerCase()} y ${plan.outer.toLowerCase()} es la apuesta mas estable.`;
   const reasons = [
     `Sensacion ${roundNumber(context.weather.apparent, 0)}° con ${roundNumber(context.weather.wind, 0)} km/h de viento.`,
+    context.indoorTime === "Interior" ||
     context.indoorTime === "Principalmente interior"
       ? "Vas a pasar mas tiempo adentro, asi que pesa mas la comodidad sin capa exterior."
       : "Vas a exponerte al exterior, asi que la capa externa pesa mas.",
@@ -642,11 +718,11 @@ function buildScenarioPlans(context: ConditionContext) {
   const scenarios = [
     {
       label: "Exterior largo",
-      context: { ...context, indoorTime: "Principalmente exterior" },
+      context: { ...context, indoorTime: "Al exterior" },
     },
     {
       label: "Interior largo",
-      context: { ...context, indoorTime: "Principalmente interior" },
+      context: { ...context, indoorTime: "Interior" },
     },
     {
       label: "Lluvia",
@@ -716,7 +792,8 @@ function buildCoverageRows(context: ConditionContext) {
       ...context,
       weather,
       activity: item.activity,
-      indoorTime: item.rain > 0 || item.wind >= 24 ? "Principalmente exterior" : context.indoorTime,
+      indoorTime:
+        item.rain > 0 || item.wind >= 24 ? "Al exterior" : context.indoorTime,
     };
     const warmth = targetWarmthForConditions(rowContext);
     const plan = makeOutfitPlan(rowContext, warmth);
@@ -1183,7 +1260,8 @@ export default function QueUsarPage() {
                       {combo.upperBody}, {combo.lowerBody}, {combo.outerLayer}
                     </strong>
                     <p>
-                      {combo.shoes} · {combo.accessories}
+                      {combo.shoes} · {combo.accessories} · {combo.doubles} ·{" "}
+                      {combo.heating}
                     </p>
                   </div>
                   <span>

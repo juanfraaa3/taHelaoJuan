@@ -33,15 +33,24 @@ test("builds the decision view around conditions, evidence and variants", async 
   assert.match(page, /Casos frecuentes/);
 });
 
-test("merges upper body and outer layer into one multi-select wizard step", async () => {
+test("renders the ten-step registration wizard with new context fields", async () => {
   const home = await source("app/page.tsx");
 
-  assert.match(home, /const upperLayerOptions = \[\.\.\.upperBodyOptions, \.\.\.outerLayerOptions\]/);
-  assert.match(home, /"Parte superior y capas"/);
-  assert.match(home, /toggleUpperLayerOption/);
-  assert.match(home, /upperLayerOptions\.map/);
+  assert.match(home, /"Parte superior"/);
+  assert.match(home, /"Parte inferior"/);
+  assert.match(home, /"Calzado"/);
+  assert.match(home, /"Accesorios"/);
+  assert.match(home, /"Actividad"/);
+  assert.match(home, /"Ubicacion"/);
+  assert.match(home, /"Sensacion"/);
+  assert.match(home, /"Dobles"/);
+  assert.match(home, /"Calefaccion"/);
+  assert.match(home, /"Algo extra que quieras recordar"/);
+  assert.match(home, /const doublesOptions = \[/);
+  assert.match(home, /const heatingOptions = \[/);
+  assert.match(home, /toggleDraftMultiOption\("upperBody", option\)/);
+  assert.match(home, /toggleDraftMultiOption\("lowerBody", option\)/);
   assert.match(home, /disabled=\{isSaving \|\| !canAdvanceWizardStep\(\)\}/);
-  assert.doesNotMatch(home, /"Capa exterior"/);
 });
 
 test("auto-loads current weather on recommendation surfaces", async () => {
@@ -63,6 +72,8 @@ test("keeps community insights anonymous", async () => {
   assert.match(route, /upperBody/);
   assert.match(route, /lowerBody/);
   assert.match(route, /outerLayer/);
+  assert.match(route, /doubles/);
+  assert.match(route, /heating/);
   assert.doesNotMatch(route, /userEmail|notes|password/i);
 });
 

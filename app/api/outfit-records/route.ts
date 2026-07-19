@@ -27,8 +27,18 @@ type OutfitRecordPayload = {
   activity?: string;
   indoorTime?: string;
   feeling?: number;
+  doubles?: string;
+  heating?: string;
   notes?: string;
 };
+
+const outerLayerOptions = [
+  "Chaqueta delgada",
+  "Cortaviento",
+  "Chaqueta abrigada",
+  "Impermeable",
+  "Abrigo grueso",
+];
 
 function toNumber(value: unknown, fallback = 0) {
   const numberValue = Number(value);
@@ -37,6 +47,25 @@ function toNumber(value: unknown, fallback = 0) {
 
 function toText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function splitSelections(value: string) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function deriveOuterLayer(upperBody: string, outerLayer: string) {
+  if (outerLayer) return outerLayer;
+
+  const selectedLayers = splitSelections(upperBody).filter((item) =>
+    outerLayerOptions.includes(item),
+  );
+
+  return selectedLayers.length > 0
+    ? selectedLayers.join(", ")
+    : "Sin chaqueta";
 }
 
 function toClientRecord(row: typeof outfitRecords.$inferSelect) {
@@ -62,6 +91,8 @@ function toClientRecord(row: typeof outfitRecords.$inferSelect) {
     activity: row.activity,
     indoorTime: row.indoorTime,
     feeling: row.feeling,
+    doubles: row.doubles,
+    heating: row.heating,
     notes: row.notes,
   };
 }
@@ -111,15 +142,16 @@ export async function POST(request: Request) {
     const weather = payload.weather ?? {};
     const upperBody = toText(payload.upperBody);
     const lowerBody = toText(payload.lowerBody);
-    const outerLayer = toText(payload.outerLayer);
+    const outerLayer = deriveOuterLayer(upperBody, toText(payload.outerLayer));
     const shoes = toText(payload.shoes);
     const activity = toText(payload.activity);
     const indoorTime = toText(payload.indoorTime);
+    const heating = toText(payload.heating);
     const feeling = Math.max(-2, Math.min(2, toNumber(payload.feeling, 0)));
 
-    if (!upperBody || !lowerBody || !outerLayer || !shoes) {
+    if (!upperBody || !lowerBody || !shoes || !activity || !indoorTime || !heating) {
       return Response.json(
-        { error: "Completa al menos ropa superior, inferior, capa y calzado." },
+        { error: "Completa ropa superior, inferior, calzado, actividad, ubicacion y calefaccion." },
         { status: 400 },
       );
     }
@@ -147,6 +179,8 @@ export async function POST(request: Request) {
         activity: activity || "Sin actividad",
         indoorTime: indoorTime || "Sin detalle",
         feeling,
+        doubles: toText(payload.doubles),
+        heating,
         notes: toText(payload.notes),
       })
       .returning();

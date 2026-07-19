@@ -38,6 +38,8 @@ export async function GET() {
         activity: outfitRecords.activity,
         indoorTime: outfitRecords.indoorTime,
         feeling: outfitRecords.feeling,
+        doubles: outfitRecords.doubles,
+        heating: outfitRecords.heating,
       })
       .from(outfitRecords)
       .orderBy(desc(outfitRecords.createdAt))
@@ -66,6 +68,8 @@ export async function GET() {
           activity: row.activity,
           indoorTime: row.indoorTime,
           feeling: row.feeling,
+          doubles: row.doubles,
+          heating: row.heating,
         })),
         total: rows.length,
         comfortableCount: rows.filter((row) => row.feeling === 0).length,
