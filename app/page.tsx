@@ -33,6 +33,7 @@ type OutfitRecord = {
   activity: string;
   indoorTime: string;
   feeling: number;
+  specificCold: string;
   doubles: string;
   heating: string;
   medicalCondition: string;
@@ -60,6 +61,7 @@ type DraftRecord = {
   activity: string;
   indoorTime: string;
   feeling: number | null;
+  specificCold: string;
   doubles: string;
   heating: string;
   medicalCondition: string;
@@ -89,6 +91,7 @@ const defaultDraft: DraftRecord = {
   activity: "",
   indoorTime: "",
   feeling: null,
+  specificCold: "",
   doubles: "",
   heating: "",
   medicalCondition: "",
@@ -175,6 +178,13 @@ const doublesOptions = [
   "Doble pantalon",
 ];
 
+const specificColdOptions = [
+  "Frio en las manos",
+  "Frio en los pies",
+  "Frio en las piernas",
+  "Frio en el torso (espalda)",
+];
+
 const heatingOptions = [
   "Calefaccion baja",
   "Calefaccion intermedia",
@@ -200,6 +210,7 @@ const wizardSteps = [
   "Actividad",
   "Ubicacion",
   "Sensacion",
+  "Frio especifico",
   "Dobles",
   "Calefaccion",
   "Condicion medica",
@@ -592,7 +603,7 @@ export default function Home() {
   }
 
   function toggleDraftMultiOption(
-    field: "upperBody" | "lowerBody" | "accessories" | "doubles",
+    field: "upperBody" | "lowerBody" | "accessories" | "specificCold" | "doubles",
     option: string,
   ) {
     const selected = splitSelections(draft[field]);
@@ -617,8 +628,8 @@ export default function Home() {
     if (wizardStep === 4) return Boolean(draft.activity);
     if (wizardStep === 5) return Boolean(draft.indoorTime);
     if (wizardStep === 6) return draft.feeling !== null;
-    if (wizardStep === 8) return Boolean(draft.heating);
-    if (wizardStep === 9) return Boolean(draft.medicalCondition);
+    if (wizardStep === 9) return Boolean(draft.heating);
+    if (wizardStep === 10) return Boolean(draft.medicalCondition);
 
     return true;
   }
@@ -856,6 +867,32 @@ export default function Home() {
       return (
         <div className="wizard-stack">
           <p className="wizard-help">
+            Puedes elegir varios. Si no tuviste frio localizado, solo avanza.
+          </p>
+          <div className="wizard-options compact-options">
+            {specificColdOptions.map((option) => (
+              <button
+                key={option}
+                className={
+                  splitSelections(draft.specificCold).includes(option)
+                    ? "active"
+                    : ""
+                }
+                onClick={() => toggleDraftMultiOption("specificCold", option)}
+                type="button"
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (wizardStep === 8) {
+      return (
+        <div className="wizard-stack">
+          <p className="wizard-help">
             Puedes elegir varios. Si no aplica ninguno, solo avanza.
           </p>
           <div className="wizard-options compact-options">
@@ -878,7 +915,7 @@ export default function Home() {
       );
     }
 
-    if (wizardStep === 8) {
+    if (wizardStep === 9) {
       return (
         <WizardOptions
           options={heatingOptions}
@@ -888,7 +925,7 @@ export default function Home() {
       );
     }
 
-    if (wizardStep === 9) {
+    if (wizardStep === 10) {
       return (
         <WizardOptions
           options={medicalConditionOptions}
@@ -919,6 +956,7 @@ export default function Home() {
           <span>
             {draft.feeling === null ? "Sin sensacion" : feelingLabels[draft.feeling]}
           </span>
+          <span>{draft.specificCold || "Sin frio especifico"}</span>
           <span>{draft.doubles || "Sin dobles"}</span>
           <span>{draft.heating}</span>
           <span>{draft.medicalCondition}</span>
@@ -1239,8 +1277,12 @@ export default function Home() {
                       {record.upperBody}, {record.lowerBody},{" "}
                       {record.outerLayer}
                     </p>
-                    {(record.doubles || record.heating || record.medicalCondition) && (
+                    {(record.specificCold ||
+                      record.doubles ||
+                      record.heating ||
+                      record.medicalCondition) && (
                       <p>
+                        {record.specificCold || "Sin frio especifico"} ·{" "}
                         {record.doubles || "Sin dobles"} ·{" "}
                         {record.heating || "Sin calefaccion"} ·{" "}
                         {record.medicalCondition || "Sin condicion"}

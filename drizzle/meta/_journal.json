@@ -36,6 +36,13 @@
       "when": 1784429398911,
       "tag": "0004_add_medical_condition",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1784433165609,
+      "tag": "0005_add_specific_cold",
+      "breakpoints": true
     }
   ]
 }

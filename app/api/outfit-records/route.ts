@@ -27,6 +27,7 @@ type OutfitRecordPayload = {
   activity?: string;
   indoorTime?: string;
   feeling?: number;
+  specificCold?: string;
   doubles?: string;
   heating?: string;
   medicalCondition?: string;
@@ -92,6 +93,7 @@ function toClientRecord(row: typeof outfitRecords.$inferSelect) {
     activity: row.activity,
     indoorTime: row.indoorTime,
     feeling: row.feeling,
+    specificCold: row.specificCold,
     doubles: row.doubles,
     heating: row.heating,
     medicalCondition: row.medicalCondition,
@@ -112,6 +114,10 @@ function toRouteErrorMessage(error: unknown) {
 
   if (message.includes("no such column") && message.includes("medical_condition")) {
     return "Falta aplicar la migracion de condicion medica en la base de datos.";
+  }
+
+  if (message.includes("no such column") && message.includes("specific_cold")) {
+    return "Falta aplicar la migracion de frio especifico en la base de datos.";
   }
 
   return message;
@@ -194,6 +200,7 @@ export async function POST(request: Request) {
         activity: activity || "Sin actividad",
         indoorTime: indoorTime || "Sin detalle",
         feeling,
+        specificCold: toText(payload.specificCold),
         doubles: toText(payload.doubles),
         heating,
         medicalCondition,

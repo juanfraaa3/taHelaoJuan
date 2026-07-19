@@ -23,6 +23,7 @@ export const outfitRecords = sqliteTable(
     activity: text("activity").notNull(),
     indoorTime: text("indoor_time").notNull(),
     feeling: integer("feeling").notNull(),
+    specificCold: text("specific_cold").notNull().default(""),
     doubles: text("doubles").notNull().default(""),
     heating: text("heating").notNull().default("Sin calefaccion"),
     medicalCondition: text("medical_condition").notNull().default("Sin condicion"),

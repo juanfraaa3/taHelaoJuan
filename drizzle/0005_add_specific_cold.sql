@@ -1,0 +1,1 @@
+ALTER TABLE `outfit_records` ADD `specific_cold` text DEFAULT '' NOT NULL;

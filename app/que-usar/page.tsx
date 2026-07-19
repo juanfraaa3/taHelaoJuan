@@ -26,6 +26,7 @@ type OutfitSample = {
   activity: string;
   indoorTime: string;
   feeling: number;
+  specificCold: string;
   doubles: string;
   heating: string;
   medicalCondition: string;
@@ -83,6 +84,7 @@ type CommunityCombo = {
   outerLayer: string;
   shoes: string;
   accessories: string;
+  specificCold: string;
   doubles: string;
   heating: string;
   medicalCondition: string;
@@ -237,6 +239,13 @@ function normalize(value: string) {
   return value.toLowerCase().trim();
 }
 
+function splitSelections(value: string) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function safeNumber(value: unknown, fallback = 0) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : fallback;
@@ -286,6 +295,45 @@ function doublesWarmth(doubles: string) {
   if (normalizedValue.includes("doble pantalon")) score += 0.75;
 
   return score;
+}
+
+function buildSpecificColdRisks(neighbors: Neighbor[]) {
+  const areaWeights = new Map<string, number>();
+
+  neighbors
+    .filter((neighbor) => neighbor.distance <= 4.2 && neighbor.sample.feeling < 0)
+    .forEach((neighbor) => {
+      splitSelections(neighbor.sample.specificCold).forEach((area) => {
+        const normalizedArea = normalize(area);
+        const weight = neighbor.weight * Math.abs(neighbor.sample.feeling);
+
+        if (normalizedArea.includes("manos")) {
+          areaWeights.set("manos", (areaWeights.get("manos") ?? 0) + weight);
+        }
+        if (normalizedArea.includes("pies")) {
+          areaWeights.set("pies", (areaWeights.get("pies") ?? 0) + weight);
+        }
+        if (normalizedArea.includes("piernas")) {
+          areaWeights.set("piernas", (areaWeights.get("piernas") ?? 0) + weight);
+        }
+        if (normalizedArea.includes("torso") || normalizedArea.includes("espalda")) {
+          areaWeights.set("torso", (areaWeights.get("torso") ?? 0) + weight);
+        }
+      });
+    });
+
+  const adviceByArea: Record<string, string> = {
+    manos: "En dias parecidos aparecio frio en manos: considera guantes o bolsillo/abrigo con buen cierre.",
+    pies: "En dias parecidos aparecio frio en pies: prioriza zapatos cerrados y doble calcetin si estaras afuera.",
+    piernas: "En dias parecidos aparecio frio en piernas: sube a pantalon mas grueso o agrega doble pantalon.",
+    torso: "En dias parecidos aparecio frio en torso/espalda: suma primera capa o sweater bajo la chaqueta.",
+  };
+
+  return [...areaWeights.entries()]
+    .filter(([, weight]) => weight >= 0.18)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([area]) => adviceByArea[area]);
 }
 
 function inferOutfitWarmth(sample: OutfitSample) {
@@ -449,6 +497,7 @@ function readLocalSamples() {
             activity: record.activity || "Caminata suave",
             indoorTime: record.indoorTime || "Mitad exterior mitad interior",
             feeling: clamp(safeNumber(record.feeling, 0), -2, 2),
+            specificCold: record.specificCold || "",
             doubles: record.doubles || "",
             heating: record.heating || "Sin calefaccion",
             medicalCondition: record.medicalCondition || "Sin condicion",
@@ -474,6 +523,7 @@ function dedupeSamples(samples: OutfitSample[]) {
       sample.lowerBody,
       sample.outerLayer,
       sample.shoes,
+      sample.specificCold || "",
       sample.doubles,
       sample.heating,
       sample.medicalCondition || "Sin condicion",
@@ -581,6 +631,7 @@ function groupCommunityCombos(neighbors: Neighbor[], targetWarmth: number) {
     .forEach((neighbor) => {
       const sample = neighbor.sample;
       const accessories = sample.accessories.trim() || "Sin accesorios";
+      const specificCold = sample.specificCold.trim() || "Sin frio especifico";
       const doubles = sample.doubles.trim() || "Sin dobles";
       const heating = sample.heating.trim() || "Sin calefaccion";
       const medicalCondition = sample.medicalCondition.trim() || "Sin condicion";
@@ -590,6 +641,7 @@ function groupCommunityCombos(neighbors: Neighbor[], targetWarmth: number) {
         sample.outerLayer,
         sample.shoes,
         accessories,
+        specificCold,
         doubles,
         heating,
         medicalCondition,
@@ -619,6 +671,7 @@ function groupCommunityCombos(neighbors: Neighbor[], targetWarmth: number) {
         outerLayer: sample.outerLayer,
         shoes: sample.shoes,
         accessories,
+        specificCold,
         doubles,
         heating,
         medicalCondition,
@@ -733,6 +786,7 @@ function buildRecommendation(samples: OutfitSample[], context: ConditionContext)
       ? "Confianza baja: registra esta salida para corregir el modelo."
       : `Confianza ${confidence}%: suficiente para decidir, pero sigue siendo aproximacion.`,
   ];
+  const specificColdRisks = buildSpecificColdRisks(usedNeighbors);
 
   if (trend === "cold") {
     reasons.push("Las respuestas parecidas muestran mas frio que calor.");
@@ -746,6 +800,7 @@ function buildRecommendation(samples: OutfitSample[], context: ConditionContext)
 
   if (rainy) risks.push("Lluvia probable: cambia a calzado impermeable si caminaras mas de unas cuadras.");
   if (windy) risks.push("Viento relevante: una prenda delgada que bloquee viento rinde mas que sumar grosor.");
+  risks.push(...specificColdRisks);
   if (medicalSensitive) {
     reasons.push(`${context.medicalCondition}: el modelo suma un margen moderado de abrigo.`);
     risks.push("Condicion medica marcada: prioriza capas removibles y ajusta segun como te sientas.");
@@ -1337,7 +1392,8 @@ export default function QueUsarPage() {
                     </strong>
                     <p>
                       {combo.shoes} · {combo.accessories} · {combo.doubles} ·{" "}
-                      {combo.heating} · {combo.medicalCondition}
+                      {combo.heating} · {combo.medicalCondition} ·{" "}
+                      {combo.specificCold}
                     </p>
                   </div>
                   <span>
