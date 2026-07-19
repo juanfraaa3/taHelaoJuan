@@ -36,6 +36,17 @@ test("builds the decision view around conditions, evidence and variants", async 
   assert.match(page, /Condicion medica/);
 });
 
+test("keeps home focused on recommendation and compact history", async () => {
+  const home = await source("app/page.tsx");
+
+  assert.match(home, /Aprendizaje y ultimos registros/);
+  assert.match(home, /className="home-insight-section"/);
+  assert.doesNotMatch(home, /Condiciones del registro/);
+  assert.doesNotMatch(home, /Registro rapido/);
+  assert.doesNotMatch(home, /href="#modelo"/);
+  assert.doesNotMatch(home, /Usar clima actual/);
+});
+
 test("renders the eleven-step registration wizard with new context fields", async () => {
   const home = await source("app/page.tsx");
 
@@ -65,7 +76,7 @@ test("auto-loads current weather on recommendation surfaces", async () => {
   ]);
 
   assert.match(home, /didAutoCaptureWeather/);
-  assert.match(home, /captureWeather\("auto"\)/);
+  assert.match(home, /captureWeather\(\)/);
   assert.match(queUsar, /didAutoCaptureWeather/);
   assert.match(queUsar, /captureWeather\("auto"\)/);
 });

@@ -399,9 +399,6 @@ export default function Home() {
   const [syncStatus, setSyncStatus] = useState(
     "Cargando registros guardados en la nube...",
   );
-  const [weatherStatus, setWeatherStatus] = useState(
-    "Puedes usar clima automatico o ajustar los datos a mano.",
-  );
   const didAutoCaptureWeather = useRef(false);
 
   useEffect(() => {
@@ -540,17 +537,10 @@ export default function Home() {
     setSyncStatus("Inicia sesion para cargar tus registros guardados.");
   }
 
-  const captureWeather = useCallback((mode: "auto" | "manual" = "manual") => {
+  const captureWeather = useCallback(() => {
     if (!navigator.geolocation) {
-      setWeatherStatus("Tu navegador no entrega ubicacion. Usa datos manuales.");
       return;
     }
-
-    setWeatherStatus(
-      mode === "auto"
-        ? "Actualizando clima actual automaticamente..."
-        : "Buscando tu ubicacion y el clima actual...",
-    );
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -581,18 +571,11 @@ export default function Home() {
             source: "automatic",
             updatedAt: new Date().toISOString(),
           });
-          setWeatherStatus("Clima automatico actualizado.");
         } catch {
-          setWeatherStatus(
-            "No pude obtener el clima automatico. Puedes ajustar los campos manualmente.",
-          );
+          return;
         }
       },
-      () => {
-        setWeatherStatus(
-          "No se autorizo la ubicacion. Puedes registrar el clima manualmente.",
-        );
-      },
+      () => {},
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 },
     );
   }, []);
@@ -601,18 +584,8 @@ export default function Home() {
     if (!hasLoadedRecords || !user || didAutoCaptureWeather.current) return;
 
     didAutoCaptureWeather.current = true;
-    captureWeather("auto");
+    captureWeather();
   }, [captureWeather, hasLoadedRecords, user]);
-
-  function updateWeather(field: keyof WeatherData, value: string) {
-    const numericValue = Number(value);
-    setWeather((current) => ({
-      ...current,
-      [field]: Number.isFinite(numericValue) ? numericValue : 0,
-      source: "manual",
-      updatedAt: new Date().toISOString(),
-    }));
-  }
 
   function toggleAccessory(accessory: string) {
     toggleDraftMultiOption("accessories", accessory);
@@ -1124,7 +1097,6 @@ export default function Home() {
           <nav className="navbar-links" aria-label="Principal">
             <a href="/que-usar">Que usar</a>
             <a href="/clima">Clima</a>
-            <a href="#modelo">Modelo</a>
             <a href="#historial">Historial</a>
           </nav>
 
@@ -1158,12 +1130,6 @@ export default function Home() {
                 parecidos y mejora la recomendacion mientras juntas historial.
               </p>
               <p className="cloud-status">{syncStatus}</p>
-            </div>
-
-            <div className="hero-actions">
-              <button className="primary-button compact" onClick={openWizard}>
-                REGISTRAR
-              </button>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -1204,105 +1170,32 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto grid w-full max-w-6xl gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-        <div className="space-y-5">
-          <section className="panel" id="clima">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">Clima</p>
-                <h2>Condiciones del registro</h2>
-              </div>
-              <button
-                className="secondary-button"
-                onClick={() => captureWeather()}
-              >
-                Usar clima actual
-              </button>
+      <section className="home-insight-section" id="historial">
+        <div className="panel home-insight-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Historial</p>
+              <h2>Aprendizaje y ultimos registros</h2>
             </div>
+            <button
+              className="secondary-button"
+              disabled={records.length === 0}
+              onClick={exportData}
+            >
+              Exportar datos
+            </button>
+          </div>
 
-            <p className="status-text">{weatherStatus}</p>
-
-            <div className="weather-grid">
-              <label>
-                Temperatura
-                <input
-                  type="number"
-                  value={weather.temperature}
-                  onChange={(event) =>
-                    updateWeather("temperature", event.target.value)
-                  }
-                />
-                <span>°C</span>
-              </label>
-              <label>
-                Sensacion
-                <input
-                  type="number"
-                  value={weather.apparent}
-                  onChange={(event) =>
-                    updateWeather("apparent", event.target.value)
-                  }
-                />
-                <span>°C</span>
-              </label>
-              <label>
-                Humedad
-                <input
-                  type="number"
-                  value={weather.humidity}
-                  onChange={(event) =>
-                    updateWeather("humidity", event.target.value)
-                  }
-                />
-                <span>%</span>
-              </label>
-              <label>
-                Viento
-                <input
-                  type="number"
-                  value={weather.wind}
-                  onChange={(event) => updateWeather("wind", event.target.value)}
-                />
-                <span>km/h</span>
-              </label>
-              <label>
-                Rafagas
-                <input
-                  type="number"
-                  value={weather.gusts}
-                  onChange={(event) =>
-                    updateWeather("gusts", event.target.value)
-                  }
-                />
-                <span>km/h</span>
-              </label>
-              <label>
-                Lluvia
-                <input
-                  type="number"
-                  value={weather.precipitation}
-                  onChange={(event) =>
-                    updateWeather("precipitation", event.target.value)
-                  }
-                />
-                <span>mm</span>
-              </label>
-            </div>
-          </section>
-
-          <section className="panel" id="modelo">
-            <div className="panel-heading">
+          <div className="learning-summary">
+            <div className="model-box compact">
               <div>
-                <p className="eyebrow">Modelo local</p>
-                <h2>Como esta aprendiendo</h2>
-              </div>
-            </div>
-            <div className="model-box">
-              <div>
-                <strong>{records.length < 8 ? "Recolectando datos" : "Personalizando"}</strong>
+                <strong>
+                  {records.length < 8 ? "Recolectando datos" : "Personalizando"}
+                </strong>
                 <p>
-                  Con menos de 8 registros la recomendacion es principalmente
-                  general. Desde ahi empieza a pesar mas tu historial.
+                  {records.length < 8
+                    ? "Con 8 registros empieza a pesar mas tu historial que la aproximacion general."
+                    : "El modelo ya mezcla clima actual con tus respuestas parecidas."}
                 </p>
               </div>
               <div className="progress-track">
@@ -1311,10 +1204,11 @@ export default function Home() {
                 />
               </div>
             </div>
+
             {prediction.similar.length > 0 && (
-              <div className="similar-list">
-                <p>Dias parecidos usados:</p>
-                {prediction.similar.slice(0, 3).map((record) => (
+              <div className="similar-list compact">
+                <p>Dias parecidos</p>
+                {prediction.similar.slice(0, 2).map((record) => (
                   <span key={record.id}>
                     {new Date(record.createdAt).toLocaleDateString("es-CL")} ·{" "}
                     {record.weather.apparent}° · {feelingLabels[record.feeling]}
@@ -1322,84 +1216,43 @@ export default function Home() {
                 ))}
               </div>
             )}
-          </section>
-        </div>
+          </div>
 
-        <div className="space-y-5">
-          <section className="panel">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">Registro rapido</p>
-                <h2>Nuevo registro</h2>
-              </div>
+          {records.length === 0 ? (
+            <div className="empty-state compact">
+              Todavia no hay registros. Guarda algunas salidas reales para que
+              esta seccion empiece a comparar dias parecidos.
             </div>
-
-            <div className="start-registration">
-              <p>
-                Responde una pregunta a la vez. La app guarda clima, ropa,
-                actividad y como te sentiste para mejorar la recomendacion.
-              </p>
-              <button className="primary-button" onClick={openWizard}>
-                REGISTRAR
-              </button>
-            </div>
-          </section>
-
-          <section className="panel" id="historial">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">Historial</p>
-                <h2>Ultimos registros</h2>
-              </div>
-              <button
-                className="secondary-button"
-                disabled={records.length === 0}
-                onClick={exportData}
-              >
-                Exportar datos
-              </button>
-            </div>
-
-            {records.length === 0 ? (
-              <div className="empty-state">
-                Guarda algunos dias reales. Lo importante es registrar tambien
-                cuando te equivocas, porque eso entrena mejor la recomendacion.
-              </div>
-            ) : (
-              <div className="records-list">
-                {records.slice(0, 6).map((record) => (
-                  <article key={record.id}>
-                    <div>
-                      <strong>
-                        {new Date(record.createdAt).toLocaleString("es-CL", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
-                      </strong>
+          ) : (
+            <div className="records-list compact">
+              {records.slice(0, 4).map((record) => (
+                <article key={record.id}>
+                  <div>
+                    <strong>
+                      {new Date(record.createdAt).toLocaleString("es-CL", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </strong>
+                    <p>
+                      {record.weather.apparent}° sensacion ·{" "}
+                      {record.upperBody}, {record.lowerBody},{" "}
+                      {record.outerLayer}
+                    </p>
+                    {(record.doubles || record.heating || record.medicalCondition) && (
                       <p>
-                        {record.weather.apparent}° sensacion ·{" "}
-                        {record.weather.humidity}% humedad ·{" "}
-                        {record.weather.wind} km/h viento
+                        {record.doubles || "Sin dobles"} ·{" "}
+                        {record.heating || "Sin calefaccion"} ·{" "}
+                        {record.medicalCondition || "Sin condicion"}
                       </p>
-                      <p>
-                        {record.upperBody}, {record.lowerBody},{" "}
-                        {record.outerLayer}
-                      </p>
-                      {(record.doubles || record.heating || record.medicalCondition) && (
-                        <p>
-                          {record.doubles || "Sin dobles"} ·{" "}
-                          {record.heating || "Sin calefaccion"} ·{" "}
-                          {record.medicalCondition || "Sin condicion"}
-                        </p>
-                      )}
-                      <span>{feelingLabels[record.feeling]}</span>
-                    </div>
-                    <button onClick={() => deleteRecord(record.id)}>Borrar</button>
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
+                    )}
+                    <span>{feelingLabels[record.feeling]}</span>
+                  </div>
+                  <button onClick={() => deleteRecord(record.id)}>Borrar</button>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </main>

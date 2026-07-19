@@ -155,8 +155,6 @@ button:disabled {
   font-weight: 850;
 }
 
-#clima,
-#modelo,
 #historial {
   scroll-margin-top: 92px;
 }
@@ -413,11 +411,6 @@ button:disabled {
   margin-top: 0;
 }
 
-.hero-actions {
-  display: flex;
-  align-items: center;
-}
-
 .secondary-button {
   border: 1px solid #fdba74;
   background: #fff7ed;
@@ -426,75 +419,8 @@ button:disabled {
   font-size: 13px;
 }
 
-.status-text {
-  margin: -6px 0 14px;
-  color: #8a6a55;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.weather-grid,
-.form-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.guided-form {
-  display: grid;
-  gap: 16px;
-}
-
-.guided-form fieldset {
-  min-width: 0;
-  border: 1px solid #fed7aa;
-  border-radius: 12px;
-  background: #fff7ed;
-  padding: 12px;
-}
-
-.guided-form legend {
-  padding: 0 6px;
-  color: #5f3a24;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.option-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.option-grid button {
-  min-height: 46px;
-  border: 1px solid #fdba74;
-  border-radius: 10px;
-  background: #fffaf5;
-  color: #4b2e1e;
-  padding: 9px 8px;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.2;
-  text-align: center;
-}
-
-.option-grid button.active {
-  border-color: #ea580c;
-  background: #ffedd5;
-  color: #9a3412;
-  box-shadow: inset 0 0 0 1px #ea580c;
-}
-
 .compact-options {
   grid-template-columns: repeat(6, minmax(0, 1fr));
-}
-
-.weather-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.form-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 label {
@@ -535,23 +461,6 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgb(234 88 12 / 0.18);
 }
 
-.weather-grid label {
-  position: relative;
-}
-
-.weather-grid label span {
-  position: absolute;
-  right: 10px;
-  bottom: 13px;
-  color: #9a6a4a;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.weather-grid input {
-  padding-right: 46px;
-}
-
 .model-box {
   display: grid;
   gap: 14px;
@@ -559,6 +468,10 @@ textarea:focus {
   border-radius: 12px;
   background: #fff7ed;
   padding: 14px;
+}
+
+.model-box.compact {
+  align-content: start;
 }
 
 .model-box strong {
@@ -596,6 +509,11 @@ textarea:focus {
   font-size: 13px;
 }
 
+.similar-list.compact {
+  align-content: start;
+  margin-top: 0;
+}
+
 .similar-list p {
   margin: 0;
   color: #4b2e1e;
@@ -609,59 +527,27 @@ textarea:focus {
   padding: 9px 10px;
 }
 
-.feeling-control {
-  margin-top: 18px;
+.home-insight-section {
+  width: 100%;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 20px 16px 28px;
 }
 
-.feeling-control p {
-  margin: 0 0 10px;
-  color: #5f3a24;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.feeling-control div {
+.home-insight-panel {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
+  gap: 14px;
 }
 
-.feeling-control button {
-  min-height: 48px;
-  border: 1px solid #fdba74;
-  border-radius: 10px;
-  background: #fff7ed;
-  color: #4b2e1e;
-  padding: 8px;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
-.feeling-control button.active {
-  border-color: #ea580c;
-  background: #ffedd5;
-  color: #9a3412;
+.learning-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 12px;
+  align-items: stretch;
 }
 
 .notes-field {
   margin-top: 16px;
-}
-
-.start-registration {
-  display: grid;
-  gap: 18px;
-  border: 1px solid #fed7aa;
-  border-radius: 12px;
-  background: #fff7ed;
-  padding: 18px;
-}
-
-.start-registration p {
-  margin: 0;
-  color: #6f5140;
-  font-size: 14px;
-  line-height: 1.6;
 }
 
 .wizard-card {
@@ -824,9 +710,18 @@ textarea:focus {
   line-height: 1.6;
 }
 
+.empty-state.compact {
+  padding: 14px;
+  font-size: 13px;
+}
+
 .records-list {
   display: grid;
   gap: 10px;
+}
+
+.records-list.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .records-list article {
@@ -837,6 +732,10 @@ textarea:focus {
   border-radius: 12px;
   background: #fff7ed;
   padding: 12px;
+}
+
+.records-list.compact article {
+  min-width: 0;
 }
 
 .records-list strong {
@@ -1666,12 +1565,6 @@ textarea:focus {
     padding: 16px;
   }
 
-  .weather-grid,
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .option-grid,
   .compact-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1685,7 +1578,6 @@ textarea:focus {
     width: 100%;
   }
 
-  .hero-actions .primary-button,
   .primary-button.compact {
     width: 100%;
   }
@@ -1707,10 +1599,8 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
-  .feeling-control div {
-    grid-template-columns: 1fr;
-  }
-
+  .learning-summary,
+  .records-list.compact,
   .records-list article {
     grid-template-columns: 1fr;
   }
