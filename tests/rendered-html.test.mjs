@@ -44,6 +44,18 @@ test("merges upper body and outer layer into one multi-select wizard step", asyn
   assert.doesNotMatch(home, /"Capa exterior"/);
 });
 
+test("auto-loads current weather on recommendation surfaces", async () => {
+  const [home, queUsar] = await Promise.all([
+    source("app/page.tsx"),
+    source("app/que-usar/page.tsx"),
+  ]);
+
+  assert.match(home, /didAutoCaptureWeather/);
+  assert.match(home, /captureWeather\("auto"\)/);
+  assert.match(queUsar, /didAutoCaptureWeather/);
+  assert.match(queUsar, /captureWeather\("auto"\)/);
+});
+
 test("keeps community insights anonymous", async () => {
   const route = await source("app/api/outfit-insights/route.ts");
 

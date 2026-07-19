@@ -1,6 +1,13 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 type WeatherData = {
   temperature: number;
@@ -339,6 +346,7 @@ export default function Home() {
   const [weatherStatus, setWeatherStatus] = useState(
     "Puedes usar clima automatico o ajustar los datos a mano.",
   );
+  const didAutoCaptureWeather = useRef(false);
 
   useEffect(() => {
     async function loadRecords() {
@@ -476,13 +484,17 @@ export default function Home() {
     setSyncStatus("Inicia sesion para cargar tus registros guardados.");
   }
 
-  async function captureWeather() {
+  const captureWeather = useCallback((mode: "auto" | "manual" = "manual") => {
     if (!navigator.geolocation) {
       setWeatherStatus("Tu navegador no entrega ubicacion. Usa datos manuales.");
       return;
     }
 
-    setWeatherStatus("Buscando tu ubicacion y el clima actual...");
+    setWeatherStatus(
+      mode === "auto"
+        ? "Actualizando clima actual automaticamente..."
+        : "Buscando tu ubicacion y el clima actual...",
+    );
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -527,7 +539,14 @@ export default function Home() {
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 },
     );
-  }
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedRecords || !user || didAutoCaptureWeather.current) return;
+
+    didAutoCaptureWeather.current = true;
+    captureWeather("auto");
+  }, [captureWeather, hasLoadedRecords, user]);
 
   function updateWeather(field: keyof WeatherData, value: string) {
     const numericValue = Number(value);
@@ -1089,7 +1108,10 @@ export default function Home() {
                 <p className="eyebrow">Clima</p>
                 <h2>Condiciones del registro</h2>
               </div>
-              <button className="secondary-button" onClick={captureWeather}>
+              <button
+                className="secondary-button"
+                onClick={() => captureWeather()}
+              >
                 Usar clima actual
               </button>
             </div>

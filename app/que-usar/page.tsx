@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type WeatherData = {
   temperature: number;
@@ -769,6 +769,7 @@ export default function QueUsarPage() {
   const [sensitivity, setSensitivity] = useState(sensitivityOptions[0]);
   const [timeOfDay, setTimeOfDay] = useState(timeOfDayOptions[2]);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+  const didAutoCaptureWeather = useRef(false);
 
   useEffect(() => {
     async function loadSamples() {
@@ -837,14 +838,18 @@ export default function QueUsarPage() {
     setWeatherStatus("Clima manual actualizado.");
   }
 
-  function captureWeather() {
+  const captureWeather = useCallback((mode: "auto" | "manual" = "manual") => {
     if (!navigator.geolocation) {
       setWeatherStatus("Tu navegador no entrega ubicacion.");
       return;
     }
 
     setIsLoadingWeather(true);
-    setWeatherStatus("Buscando clima actual...");
+    setWeatherStatus(
+      mode === "auto"
+        ? "Actualizando clima actual automaticamente..."
+        : "Buscando clima actual...",
+    );
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -890,7 +895,14 @@ export default function QueUsarPage() {
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 },
     );
-  }
+  }, []);
+
+  useEffect(() => {
+    if (didAutoCaptureWeather.current) return;
+
+    didAutoCaptureWeather.current = true;
+    captureWeather("auto");
+  }, [captureWeather]);
 
   return (
     <main className="use-page min-h-screen bg-[#f8fafc] text-[#172018]">
@@ -948,7 +960,7 @@ export default function QueUsarPage() {
             <button
               className="secondary-button"
               disabled={isLoadingWeather}
-              onClick={captureWeather}
+              onClick={() => captureWeather()}
               type="button"
             >
               {isLoadingWeather ? "Cargando..." : "Usar ubicacion"}
