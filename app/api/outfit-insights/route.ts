@@ -40,6 +40,7 @@ export async function GET() {
         feeling: outfitRecords.feeling,
         doubles: outfitRecords.doubles,
         heating: outfitRecords.heating,
+        medicalCondition: outfitRecords.medicalCondition,
       })
       .from(outfitRecords)
       .orderBy(desc(outfitRecords.createdAt))
@@ -70,6 +71,7 @@ export async function GET() {
           feeling: row.feeling,
           doubles: row.doubles,
           heating: row.heating,
+          medicalCondition: row.medicalCondition,
         })),
         total: rows.length,
         comfortableCount: rows.filter((row) => row.feeling === 0).length,

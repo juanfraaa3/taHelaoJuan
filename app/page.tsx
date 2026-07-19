@@ -35,6 +35,7 @@ type OutfitRecord = {
   feeling: number;
   doubles: string;
   heating: string;
+  medicalCondition: string;
   notes: string;
 };
 
@@ -61,6 +62,7 @@ type DraftRecord = {
   feeling: number | null;
   doubles: string;
   heating: string;
+  medicalCondition: string;
   notes: string;
 };
 
@@ -89,6 +91,7 @@ const defaultDraft: DraftRecord = {
   feeling: null,
   doubles: "",
   heating: "",
+  medicalCondition: "",
   notes: "",
 };
 
@@ -179,6 +182,16 @@ const heatingOptions = [
   "Sin calefaccion",
 ];
 
+const medicalConditionOptions = [
+  "Sin condicion",
+  "Resfriado",
+  "Congestion",
+  "Dolor de garganta",
+  "Fiebre",
+  "Alergia",
+  "Malestar general",
+];
+
 const wizardSteps = [
   "Parte superior",
   "Parte inferior",
@@ -189,6 +202,7 @@ const wizardSteps = [
   "Sensacion",
   "Dobles",
   "Calefaccion",
+  "Condicion medica",
   "Algo extra que quieras recordar",
 ];
 
@@ -631,6 +645,7 @@ export default function Home() {
     if (wizardStep === 5) return Boolean(draft.indoorTime);
     if (wizardStep === 6) return draft.feeling !== null;
     if (wizardStep === 8) return Boolean(draft.heating);
+    if (wizardStep === 9) return Boolean(draft.medicalCondition);
 
     return true;
   }
@@ -658,7 +673,8 @@ export default function Home() {
       | "shoes"
       | "activity"
       | "indoorTime"
-      | "heating",
+      | "heating"
+      | "medicalCondition",
     value: string,
   ) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -899,6 +915,16 @@ export default function Home() {
       );
     }
 
+    if (wizardStep === 9) {
+      return (
+        <WizardOptions
+          options={medicalConditionOptions}
+          selected={draft.medicalCondition}
+          onSelect={(option) => selectDraftOption("medicalCondition", option)}
+        />
+      );
+    }
+
     return (
       <div className="wizard-stack">
         <label className="notes-field">
@@ -922,6 +948,7 @@ export default function Home() {
           </span>
           <span>{draft.doubles || "Sin dobles"}</span>
           <span>{draft.heating}</span>
+          <span>{draft.medicalCondition}</span>
         </div>
       </div>
     );
@@ -1358,10 +1385,11 @@ export default function Home() {
                         {record.upperBody}, {record.lowerBody},{" "}
                         {record.outerLayer}
                       </p>
-                      {(record.doubles || record.heating) && (
+                      {(record.doubles || record.heating || record.medicalCondition) && (
                         <p>
                           {record.doubles || "Sin dobles"} ·{" "}
-                          {record.heating || "Sin calefaccion"}
+                          {record.heating || "Sin calefaccion"} ·{" "}
+                          {record.medicalCondition || "Sin condicion"}
                         </p>
                       )}
                       <span>{feelingLabels[record.feeling]}</span>

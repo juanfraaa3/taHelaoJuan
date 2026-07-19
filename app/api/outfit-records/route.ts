@@ -29,6 +29,7 @@ type OutfitRecordPayload = {
   feeling?: number;
   doubles?: string;
   heating?: string;
+  medicalCondition?: string;
   notes?: string;
 };
 
@@ -93,6 +94,7 @@ function toClientRecord(row: typeof outfitRecords.$inferSelect) {
     feeling: row.feeling,
     doubles: row.doubles,
     heating: row.heating,
+    medicalCondition: row.medicalCondition,
     notes: row.notes,
   };
 }
@@ -106,6 +108,10 @@ function toRouteErrorMessage(error: unknown) {
 
   if (message.includes("no such column") && message.includes("user_email")) {
     return "Falta aplicar la migracion de usuarios en la base de datos.";
+  }
+
+  if (message.includes("no such column") && message.includes("medical_condition")) {
+    return "Falta aplicar la migracion de condicion medica en la base de datos.";
   }
 
   return message;
@@ -147,11 +153,20 @@ export async function POST(request: Request) {
     const activity = toText(payload.activity);
     const indoorTime = toText(payload.indoorTime);
     const heating = toText(payload.heating);
+    const medicalCondition = toText(payload.medicalCondition) || "Sin condicion";
     const feeling = Math.max(-2, Math.min(2, toNumber(payload.feeling, 0)));
 
-    if (!upperBody || !lowerBody || !shoes || !activity || !indoorTime || !heating) {
+    if (
+      !upperBody ||
+      !lowerBody ||
+      !shoes ||
+      !activity ||
+      !indoorTime ||
+      !heating ||
+      !medicalCondition
+    ) {
       return Response.json(
-        { error: "Completa ropa superior, inferior, calzado, actividad, ubicacion y calefaccion." },
+        { error: "Completa ropa superior, inferior, calzado, actividad, ubicacion, calefaccion y condicion medica." },
         { status: 400 },
       );
     }
@@ -181,6 +196,7 @@ export async function POST(request: Request) {
         feeling,
         doubles: toText(payload.doubles),
         heating,
+        medicalCondition,
         notes: toText(payload.notes),
       })
       .returning();

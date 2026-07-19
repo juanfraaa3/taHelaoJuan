@@ -29,6 +29,13 @@
       "when": 1784427358138,
       "tag": "0003_add_registration_context",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1784429398911,
+      "tag": "0004_add_medical_condition",
+      "breakpoints": true
     }
   ]
 }

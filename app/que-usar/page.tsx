@@ -28,6 +28,7 @@ type OutfitSample = {
   feeling: number;
   doubles: string;
   heating: string;
+  medicalCondition: string;
 };
 
 type ConditionContext = {
@@ -36,6 +37,7 @@ type ConditionContext = {
   indoorTime: string;
   sensitivity: string;
   timeOfDay: string;
+  medicalCondition: string;
 };
 
 type Neighbor = {
@@ -83,6 +85,7 @@ type CommunityCombo = {
   accessories: string;
   doubles: string;
   heating: string;
+  medicalCondition: string;
 };
 
 const STORAGE_KEY = "tahelaojuan-registros-v1";
@@ -117,6 +120,15 @@ const indoorTimeOptions = [
 
 const sensitivityOptions = ["Balanceado", "Friolento", "Caluroso"];
 const timeOfDayOptions = ["Manana", "Mediodia", "Tarde", "Noche"];
+const medicalConditionOptions = [
+  "Sin condicion",
+  "Resfriado",
+  "Congestion",
+  "Dolor de garganta",
+  "Fiebre",
+  "Alergia",
+  "Malestar general",
+];
 
 const activityAdjustment: Record<string, number> = {
   "Caminata suave": -0.4,
@@ -151,6 +163,16 @@ const timeAdjustment: Record<string, number> = {
   Mediodia: -0.5,
   Tarde: 0,
   Noche: 0.8,
+};
+
+const medicalConditionAdjustment: Record<string, number> = {
+  "Sin condicion": 0,
+  Resfriado: 0.55,
+  Congestion: 0.35,
+  "Dolor de garganta": 0.45,
+  Fiebre: 0.25,
+  Alergia: 0,
+  "Malestar general": 0.4,
 };
 
 const upperWarmth = [
@@ -228,6 +250,14 @@ function isMostlyOutside(indoorTime: string) {
   return indoorTime !== "Interior" && indoorTime !== "Principalmente interior";
 }
 
+function hasMedicalCondition(medicalCondition: string) {
+  return normalize(medicalCondition) !== "sin condicion";
+}
+
+function hasFever(medicalCondition: string) {
+  return normalize(medicalCondition).includes("fiebre");
+}
+
 function optionWarmth(value: string, rules: readonly (readonly [string, number])[], fallback: number) {
   const normalizedValue = normalize(value);
   const match = rules.find(([label]) => normalizedValue.includes(label));
@@ -270,7 +300,7 @@ function inferOutfitWarmth(sample: OutfitSample) {
 }
 
 function targetWarmthForConditions(context: ConditionContext) {
-  const { weather, activity, indoorTime, sensitivity, timeOfDay } = context;
+  const { weather, activity, indoorTime, sensitivity, timeOfDay, medicalCondition } = context;
   let target = 7.9 - weather.apparent * 0.23;
 
   if (weather.apparent < 0) target += 0.8;
@@ -286,6 +316,7 @@ function targetWarmthForConditions(context: ConditionContext) {
   target += indoorAdjustment[indoorTime] ?? 0;
   target += sensitivityAdjustment[sensitivity] ?? 0;
   target += timeAdjustment[timeOfDay] ?? 0;
+  target += medicalConditionAdjustment[medicalCondition] ?? 0;
 
   return clamp(target, 0.8, 9.8);
 }
@@ -328,7 +359,7 @@ function indoorGroup(indoorTime: string) {
 }
 
 function sampleDistance(sample: OutfitSample, context: ConditionContext) {
-  const { weather, activity, indoorTime, timeOfDay } = context;
+  const { weather, activity, indoorTime, timeOfDay, medicalCondition } = context;
   const sampleWeather = sample.weather;
   const rainGap = weatherIsRainy(weather) === weatherIsRainy(sampleWeather) ? 0 : 0.75;
   const activityGap =
@@ -342,6 +373,13 @@ function sampleDistance(sample: OutfitSample, context: ConditionContext) {
   const indoorGap =
     indoorGroup(sample.indoorTime) === indoorGroup(indoorTime) ? 0 : 0.45;
   const timeGap = timeBucketFromDate(sample.createdAt) === timeOfDay ? 0 : 0.25;
+  const sampleMedicalCondition = sample.medicalCondition || "Sin condicion";
+  const medicalGap =
+    sampleMedicalCondition === medicalCondition
+      ? 0
+      : hasMedicalCondition(sampleMedicalCondition) && hasMedicalCondition(medicalCondition)
+        ? 0.28
+        : 0.5;
 
   return (
     Math.abs(weather.apparent - sampleWeather.apparent) / 5.5 +
@@ -352,7 +390,8 @@ function sampleDistance(sample: OutfitSample, context: ConditionContext) {
     rainGap +
     activityGap +
     indoorGap +
-    timeGap
+    timeGap +
+    medicalGap
   );
 }
 
@@ -412,6 +451,7 @@ function readLocalSamples() {
             feeling: clamp(safeNumber(record.feeling, 0), -2, 2),
             doubles: record.doubles || "",
             heating: record.heating || "Sin calefaccion",
+            medicalCondition: record.medicalCondition || "Sin condicion",
           });
         }
       });
@@ -436,6 +476,7 @@ function dedupeSamples(samples: OutfitSample[]) {
       sample.shoes,
       sample.doubles,
       sample.heating,
+      sample.medicalCondition || "Sin condicion",
       sample.feeling,
     ].join("|");
 
@@ -446,11 +487,12 @@ function dedupeSamples(samples: OutfitSample[]) {
 }
 
 function makeOutfitPlan(context: ConditionContext, targetWarmth: number): OutfitPlan {
-  const { weather, activity, indoorTime, timeOfDay } = context;
+  const { weather, activity, indoorTime, timeOfDay, medicalCondition } = context;
   const rainy = weatherIsRainy(weather) && isMostlyOutside(indoorTime);
   const windy = weather.wind >= 18 && isMostlyOutside(indoorTime);
   const hot = weather.apparent >= 26;
   const exercise = activity === "Ejercicio";
+  const medicalSensitive = hasMedicalCondition(medicalCondition);
   const mostlyIndoor =
     indoorTime === "Interior" || indoorTime === "Principalmente interior";
   let upper = "Polera";
@@ -504,16 +546,21 @@ function makeOutfitPlan(context: ConditionContext, targetWarmth: number): Outfit
   else if (targetWarmth >= 6.6 && isMostlyOutside(indoorTime)) accessories.push("Gorro o bufanda");
   if (rainy) accessories.push("paraguas");
   if (hot && weather.cloudCover <= 60) accessories.push("lentes");
+  if (medicalSensitive && !hot && isMostlyOutside(indoorTime)) {
+    accessories.push(hasFever(medicalCondition) ? "capa facil de sacar" : "bufanda opcional");
+  }
 
-  const note = mostlyIndoor
-    ? "Prioriza capas que puedas sacar rapido al entrar."
-    : rainy
-      ? "La capa exterior manda: que corte agua antes que sumar volumen."
-      : windy
-        ? "El viento cambia la sensacion; conviene bloquearlo por fuera."
-        : exercise
-          ? "Empieza un poco fresco: al moverte vas a subir temperatura."
-          : "La combinacion busca margen sin quedar pasado de abrigo.";
+  const note = medicalSensitive
+    ? "Como registraste condicion medica, usa capas removibles y evita quedar pasado de calor."
+    : mostlyIndoor
+      ? "Prioriza capas que puedas sacar rapido al entrar."
+      : rainy
+        ? "La capa exterior manda: que corte agua antes que sumar volumen."
+        : windy
+          ? "El viento cambia la sensacion; conviene bloquearlo por fuera."
+          : exercise
+            ? "Empieza un poco fresco: al moverte vas a subir temperatura."
+            : "La combinacion busca margen sin quedar pasado de abrigo.";
 
   return {
     upper,
@@ -536,6 +583,7 @@ function groupCommunityCombos(neighbors: Neighbor[], targetWarmth: number) {
       const accessories = sample.accessories.trim() || "Sin accesorios";
       const doubles = sample.doubles.trim() || "Sin dobles";
       const heating = sample.heating.trim() || "Sin calefaccion";
+      const medicalCondition = sample.medicalCondition.trim() || "Sin condicion";
       const key = [
         sample.upperBody,
         sample.lowerBody,
@@ -544,6 +592,7 @@ function groupCommunityCombos(neighbors: Neighbor[], targetWarmth: number) {
         accessories,
         doubles,
         heating,
+        medicalCondition,
       ].join("|");
       const comfortFactor =
         sample.feeling === 0 ? 1.15 : Math.abs(sample.feeling) === 1 ? 0.72 : 0.36;
@@ -572,6 +621,7 @@ function groupCommunityCombos(neighbors: Neighbor[], targetWarmth: number) {
         accessories,
         doubles,
         heating,
+        medicalCondition,
       });
     });
 
@@ -645,17 +695,20 @@ function buildRecommendation(samples: OutfitSample[], context: ConditionContext)
   const plan = makeOutfitPlan(context, targetWarmth);
   const rainy = weatherIsRainy(context.weather) && isMostlyOutside(context.indoorTime);
   const windy = context.weather.wind >= 18 && isMostlyOutside(context.indoorTime);
+  const medicalSensitive = hasMedicalCondition(context.medicalCondition);
   const title = rainy
     ? "Prioriza capa impermeable"
-    : context.activity === "Ejercicio"
-      ? "Ve liviano para moverte"
-      : targetWarmth >= 7.6
-        ? "Abrigate fuerte"
-        : targetWarmth >= 5.6
-          ? "Usa capas"
-          : targetWarmth >= 3.6
-            ? "Capa liviana opcional"
-            : "Ve liviano";
+    : medicalSensitive
+      ? "Cuida el margen termico"
+      : context.activity === "Ejercicio"
+        ? "Ve liviano para moverte"
+        : targetWarmth >= 7.6
+          ? "Abrigate fuerte"
+          : targetWarmth >= 5.6
+            ? "Usa capas"
+            : targetWarmth >= 3.6
+              ? "Capa liviana opcional"
+              : "Ve liviano";
   const sourceLabel =
     samples.length === 0
       ? "modelo general"
@@ -693,6 +746,10 @@ function buildRecommendation(samples: OutfitSample[], context: ConditionContext)
 
   if (rainy) risks.push("Lluvia probable: cambia a calzado impermeable si caminaras mas de unas cuadras.");
   if (windy) risks.push("Viento relevante: una prenda delgada que bloquee viento rinde mas que sumar grosor.");
+  if (medicalSensitive) {
+    reasons.push(`${context.medicalCondition}: el modelo suma un margen moderado de abrigo.`);
+    risks.push("Condicion medica marcada: prioriza capas removibles y ajusta segun como te sientas.");
+  }
   if (context.weather.humidity >= 75 && context.weather.apparent >= 23) {
     risks.push("Humedad alta con calor: usa telas respirables y reduce capas.");
   }
@@ -761,6 +818,10 @@ function buildScenarioPlans(context: ConditionContext) {
           temperature: context.weather.temperature - 2,
         },
       },
+    },
+    {
+      label: "Resfriado",
+      context: { ...context, medicalCondition: "Resfriado" },
     },
   ];
 
@@ -845,6 +906,7 @@ export default function QueUsarPage() {
   const [indoorTime, setIndoorTime] = useState(indoorTimeOptions[1]);
   const [sensitivity, setSensitivity] = useState(sensitivityOptions[0]);
   const [timeOfDay, setTimeOfDay] = useState(timeOfDayOptions[2]);
+  const [medicalCondition, setMedicalCondition] = useState(medicalConditionOptions[0]);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
   const didAutoCaptureWeather = useRef(false);
 
@@ -894,8 +956,15 @@ export default function QueUsarPage() {
   }, []);
 
   const context = useMemo(
-    () => ({ weather, activity, indoorTime, sensitivity, timeOfDay }),
-    [weather, activity, indoorTime, sensitivity, timeOfDay],
+    () => ({
+      weather,
+      activity,
+      indoorTime,
+      sensitivity,
+      timeOfDay,
+      medicalCondition,
+    }),
+    [weather, activity, indoorTime, sensitivity, timeOfDay, medicalCondition],
   );
   const recommendation = useMemo(
     () => buildRecommendation(samples, context),
@@ -1116,6 +1185,12 @@ export default function QueUsarPage() {
             selected={indoorTime}
             onChange={setIndoorTime}
           />
+          <SegmentGroup
+            label="Condicion medica"
+            options={medicalConditionOptions}
+            selected={medicalCondition}
+            onChange={setMedicalCondition}
+          />
           <div className="use-two-segments">
             <SegmentGroup
               label="Sensibilidad"
@@ -1262,7 +1337,7 @@ export default function QueUsarPage() {
                     </strong>
                     <p>
                       {combo.shoes} · {combo.accessories} · {combo.doubles} ·{" "}
-                      {combo.heating}
+                      {combo.heating} · {combo.medicalCondition}
                     </p>
                   </div>
                   <span>

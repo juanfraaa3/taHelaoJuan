@@ -1,0 +1,1 @@
+ALTER TABLE `outfit_records` ADD `medical_condition` text DEFAULT 'Sin condicion' NOT NULL;

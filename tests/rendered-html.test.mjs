@@ -31,9 +31,12 @@ test("builds the decision view around conditions, evidence and variants", async 
   assert.match(page, /Combinacion recomendada/);
   assert.match(page, /Combinaciones reales/);
   assert.match(page, /Casos frecuentes/);
+  assert.match(page, /medicalConditionOptions/);
+  assert.match(page, /medicalConditionAdjustment/);
+  assert.match(page, /Condicion medica/);
 });
 
-test("renders the ten-step registration wizard with new context fields", async () => {
+test("renders the eleven-step registration wizard with new context fields", async () => {
   const home = await source("app/page.tsx");
 
   assert.match(home, /"Parte superior"/);
@@ -45,9 +48,11 @@ test("renders the ten-step registration wizard with new context fields", async (
   assert.match(home, /"Sensacion"/);
   assert.match(home, /"Dobles"/);
   assert.match(home, /"Calefaccion"/);
+  assert.match(home, /"Condicion medica"/);
   assert.match(home, /"Algo extra que quieras recordar"/);
   assert.match(home, /const doublesOptions = \[/);
   assert.match(home, /const heatingOptions = \[/);
+  assert.match(home, /const medicalConditionOptions = \[/);
   assert.match(home, /toggleDraftMultiOption\("upperBody", option\)/);
   assert.match(home, /toggleDraftMultiOption\("lowerBody", option\)/);
   assert.match(home, /disabled=\{isSaving \|\| !canAdvanceWizardStep\(\)\}/);
@@ -74,6 +79,7 @@ test("keeps community insights anonymous", async () => {
   assert.match(route, /outerLayer/);
   assert.match(route, /doubles/);
   assert.match(route, /heating/);
+  assert.match(route, /medicalCondition/);
   assert.doesNotMatch(route, /userEmail|notes|password/i);
 });
 
